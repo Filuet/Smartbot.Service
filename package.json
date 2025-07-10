@@ -27,8 +27,8 @@
     "react-draggable": "^4.5.0"
   },
   "build": {
-    "appId": "Generic-UI",
-    "productName": "Generic UI",
+    "appId": "Smartbot.Service",
+    "productName": "Smart Bot Service",
     "directories": {
       "buildResources": "resources",
       "output": "release"
