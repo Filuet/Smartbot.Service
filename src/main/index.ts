@@ -38,7 +38,7 @@ function createWindow(): void {
   ipcMain.handle('get-running-apps', async () => {
     return new Promise((resolve) => {
       if (process.platform === 'win32') {
-        exec('tasklist', (error, stdout) => {
+        exec('tasklist', (_error, stdout) => {
           const apps = stdout
             .split('\n')
             .map((line) => line.split(' ')[0])
@@ -47,7 +47,7 @@ function createWindow(): void {
           resolve(apps);
         });
       } else if (process.platform === 'darwin') {
-        exec('ps -A -o comm=', (error, stdout) => {
+        exec('ps -A -o comm=', (_error, stdout) => {
           const apps = stdout
             .split('\n')
             .map((app) => app.trim())
@@ -56,7 +56,7 @@ function createWindow(): void {
         });
       } else {
         // Linux implementation
-        exec('ps -e -o comm=', (error, stdout) => {
+        exec('ps -e -o comm=', (_error, stdout) => {
           const apps = stdout.split('\n').map((app) => app.trim());
           resolve(apps);
         });
