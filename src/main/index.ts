@@ -15,7 +15,7 @@ if (!gotTheLock) {
       mainWindow.focus();
     }
   });
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     // Set app user model id for windows
     electronApp.setAppUserModelId('com.electron');
 
@@ -32,7 +32,6 @@ if (!gotTheLock) {
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) {
         mainWindow = mainWindowObject();
-        registerAllIpcHandler(mainWindow);
       }
     });
   });

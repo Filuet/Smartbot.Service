@@ -2,15 +2,18 @@ import { BrowserWindow, ipcMain, screen } from 'electron';
 import { IPC_CHANNELS } from '../../shared/ipcChannels';
 
 const windowMoveResizeIpc = (mainWindow: BrowserWindow): void => {
-  ipcMain.on(IPC_CHANNELS.MOVE_WINDOW, (_, x, y) => {
+  ipcMain.on(IPC_CHANNELS.MOVE_WINDOW, (_, x: number, y: number) => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     const boundedX = Math.max(0, Math.min(x, width - mainWindow.getSize()[0]));
     const boundedY = Math.max(0, Math.min(y, height - mainWindow.getSize()[1]));
     mainWindow.setPosition(boundedX, boundedY);
   });
-  ipcMain.handle(IPC_CHANNELS.GET_POSITION, () => mainWindow.getPosition());
+  ipcMain.handle(IPC_CHANNELS.GET_POSITION, () => {
+    const [x, y] = mainWindow.getPosition();
+    return { x, y };
+  });
 
-  ipcMain.on(IPC_CHANNELS.SET_WINDOW_SIZE, (_, width, height) => {
+  ipcMain.on(IPC_CHANNELS.SET_WINDOW_SIZE, (_, width: number, height: number) => {
     const win = BrowserWindow.getFocusedWindow();
     if (win) {
       const { workArea } = screen.getPrimaryDisplay();

@@ -20,4 +20,8 @@ if (process.contextIsolated) {
   } catch (error) {
     console.error('Failed to expose electron API:', error);
   }
+} else {
+  // Fallback for non-isolated context
+  // @ts-ignore (define in dts)
+  window.electron = toolkitAPI;
 }

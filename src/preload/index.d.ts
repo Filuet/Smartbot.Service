@@ -1,4 +1,4 @@
-import { ElectronBridgeAPI } from './../shared/sharedTypes';
+import { ElectronBridgeAPI } from 'src/shared/sharedTypes';
 
 declare global {
   interface Window {

@@ -1,6 +1,6 @@
 import { is } from '@electron-toolkit/utils';
 import { BrowserWindow } from 'electron';
-import { join } from 'path';
+import { resolve } from 'path';
 
 export const mainWindowObject = (): BrowserWindow => {
   const mainWindow = new BrowserWindow({
@@ -14,8 +14,8 @@ export const mainWindowObject = (): BrowserWindow => {
     backgroundColor: '#00FFFFFF', // Transparent background
     title: '',
     webPreferences: {
-      nodeIntegration: true,
-      preload: join(__dirname, '../preload/index.js'),
+      nodeIntegration: false,
+      preload: resolve(__dirname, '../../out/preload/index.js'),
       contextIsolation: true
     },
     minimizable: false
@@ -40,7 +40,7 @@ export const mainWindowObject = (): BrowserWindow => {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(resolve(__dirname, '../renderer/index.html'));
   }
   return mainWindow;
 };

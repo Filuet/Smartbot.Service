@@ -7,14 +7,14 @@ export function createWindowMoveResizeBridge(ipcRenderer: Electron.IpcRenderer):
 } {
   return {
     moveWindow: (x: number, y: number) => {
-      ipcRenderer.send(IPC_CHANNELS.MOVE_WINDOW, { x, y });
+      ipcRenderer.send(IPC_CHANNELS.MOVE_WINDOW, x, y);
     },
     getPosition: async (): Promise<[number, number]> => {
-      const pos: { x: number; y: number } = await ipcRenderer.invoke(IPC_CHANNELS.GET_POSITION);
+      const pos = await ipcRenderer.invoke(IPC_CHANNELS.GET_POSITION);
       return [pos.x, pos.y];
     },
     setWindowSize: (width: number, height: number) => {
-      ipcRenderer.send(IPC_CHANNELS.SET_WINDOW_SIZE, { width, height });
+      ipcRenderer.send(IPC_CHANNELS.SET_WINDOW_SIZE, width, height);
     }
   };
 }
