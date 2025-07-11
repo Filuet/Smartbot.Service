@@ -1,14 +1,14 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
-// Custom APIs for renderer
-const api = {
-  moveWindow: (x: number, y: number) => ipcRenderer.send('move-window', x, y),
-  getPosition: () => ipcRenderer.invoke('get-position'),
-  getRunningApps: () => ipcRenderer.invoke('get-running-apps'),
-  restartApp: () => ipcRenderer.invoke('restart-app'),
-  setWindowSize: (width: number, height: number) =>
-    ipcRenderer.send('set-window-size', width, height)
-}
+import { contextBridge, ipcRenderer } from 'electron';
+import { electronAPI as toolkitAPI } from '@electron-toolkit/preload';
+import { ElectronBridgeAPI } from '../shared/sharedTypes';
+import { createWindowMoveResizeBridge } from './bridge/windowMoveResizeBridge';
+import { createAppRestartBridge } from './bridge/appRestartBridge';
+
+const electronAPI: ElectronBridgeAPI = {
+  ...toolkitAPI,
+  windowMoveResize: createWindowMoveResizeBridge(ipcRenderer),
+  restartAppUtils: createAppRestartBridge(ipcRenderer)
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
@@ -16,11 +16,8 @@ const api = {
 if (process.contextIsolated) {
   try {
     // First expose electronAPI (from @electron-toolkit/preload)
-    contextBridge.exposeInMainWorld('electron', {
-      ...electronAPI, // Spread in the toolkit APIs
-      ...api // Add your custom APIs
-    })
+    contextBridge.exposeInMainWorld('electron', electronAPI);
   } catch (error) {
-    console.error('Failed to expose electron API:', error)
+    console.error('Failed to expose electron API:', error);
   }
 }
