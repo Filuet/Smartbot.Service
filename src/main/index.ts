@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 // import { exec } from 'child_process'
 import { electronApp, optimizer } from '@electron-toolkit/utils';
-import { mainWindowObject } from './window/mainWindowObject';
+import { mainWindowObject } from './windows/mainWindowObject';
 import registerAllIpcHandler from './ipcHandlers/registerAllIpcHandlers';
 
 let mainWindow: BrowserWindow | null = null;

@@ -1,6 +1,6 @@
 import { is } from '@electron-toolkit/utils';
 import { BrowserWindow } from 'electron';
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 
 export const mainWindowObject = (): BrowserWindow => {
   const mainWindow = new BrowserWindow({
@@ -15,7 +15,7 @@ export const mainWindowObject = (): BrowserWindow => {
     title: '',
     webPreferences: {
       nodeIntegration: false,
-      preload: resolve(__dirname, '../../out/preload/index.js'),
+      preload: join('../out/preload/index.js'),
       contextIsolation: true
     },
     minimizable: false
