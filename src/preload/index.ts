@@ -1,11 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { electronAPI as toolkitAPI } from '@electron-toolkit/preload';
+import { electronAPI } from '@electron-toolkit/preload';
 import { ElectronBridgeAPI } from '../shared/sharedTypes';
 import { createWindowMoveResizeBridge } from './bridge/windowMoveResizeBridge';
 import { createAppRestartBridge } from './bridge/appRestartBridge';
 
-const electronAPI: ElectronBridgeAPI = {
-  ...toolkitAPI,
+const api: ElectronBridgeAPI = {
+  ...electronAPI,
   windowMoveResize: createWindowMoveResizeBridge(ipcRenderer),
   restartAppUtils: createAppRestartBridge(ipcRenderer)
 };
@@ -16,12 +16,13 @@ const electronAPI: ElectronBridgeAPI = {
 if (process.contextIsolated) {
   try {
     // First expose electronAPI (from @electron-toolkit/preload)
-    contextBridge.exposeInMainWorld('electron', electronAPI);
+    contextBridge.exposeInMainWorld('electron', api);
   } catch (error) {
     console.error('Failed to expose electron API:', error);
   }
-} else {
-  // Fallback for non-isolated context
-  // @ts-ignore (define in dts)
-  window.electron = toolkitAPI;
 }
+// else {
+//   // Fallback for non-isolated context
+//   // @ts-ignore (define in dts)
+//   window.electron = electronAPI;
+// }

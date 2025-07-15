@@ -1,6 +1,6 @@
 import { is } from '@electron-toolkit/utils';
 import { BrowserWindow } from 'electron';
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 
 export const mainWindowObject = (): BrowserWindow => {
   const mainWindow = new BrowserWindow({
@@ -14,12 +14,13 @@ export const mainWindowObject = (): BrowserWindow => {
     backgroundColor: '#00FFFFFF', // Transparent background
     title: '',
     webPreferences: {
+      preload: resolve(__dirname, '../../out/preload/index.js'),
       nodeIntegration: false,
-      preload: join('../out/preload/index.js'),
       contextIsolation: true
     },
     minimizable: false
   });
+
   mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
   mainWindow.setVisibleOnAllWorkspaces(true);
   mainWindow.setFullScreenable(false);

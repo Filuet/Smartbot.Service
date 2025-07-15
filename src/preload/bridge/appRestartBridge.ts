@@ -4,6 +4,6 @@ export function createAppRestartBridge(ipc: Electron.IpcRenderer): {
   restartApp: () => Promise<void>;
 } {
   return {
-    restartApp: () => ipc.invoke(IPC_CHANNELS.RESTART_APP)
+    restartApp: (): Promise<void> => ipc.invoke(IPC_CHANNELS.RESTART_APP)
   };
 }
