@@ -15,8 +15,11 @@ export const mainWindowObject = (): BrowserWindow => {
     title: '',
     webPreferences: {
       preload: resolve(__dirname, '../../out/preload/index.js'),
-      nodeIntegration: false,
-      contextIsolation: true
+      sandbox: false, // Enable sandbox mode
+      contextIsolation: true, // Isolate context of renderer
+      nodeIntegration: false, // Enable Node.js in renderer
+      nodeIntegrationInWorker: false, // Enable Node.js in web workers
+      nodeIntegrationInSubFrames: false // Node.js in subframes (discouraged)
     },
     minimizable: false
   });
