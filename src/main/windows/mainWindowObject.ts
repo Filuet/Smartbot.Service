@@ -17,9 +17,7 @@ export const mainWindowObject = (): BrowserWindow => {
       preload: resolve(__dirname, '../../out/preload/index.js'),
       sandbox: false, // Enable sandbox mode
       contextIsolation: true, // Isolate context of renderer
-      nodeIntegration: false, // Enable Node.js in renderer
-      nodeIntegrationInWorker: false, // Enable Node.js in web workers
-      nodeIntegrationInSubFrames: false // Node.js in subframes (discouraged)
+      nodeIntegration: false // Enable Node.js in renderer
     },
     minimizable: false
   });
@@ -36,9 +34,9 @@ export const mainWindowObject = (): BrowserWindow => {
   mainWindow.on('ready-to-show', () => {
     mainWindow.show();
   });
-  if (is.dev) {
-    mainWindow.webContents.openDevTools();
-  }
+  // if (is.dev) {
+  //   mainWindow.webContents.openDevTools();
+  // }
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

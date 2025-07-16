@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron';
 import { ProcessConfig, processManager } from '../utils/processManager';
 import { IPC_CHANNELS } from '../../shared/ipcChannels';
+import { AppLogger } from '../utils/appLogger';
 
 const appRestartHandler = (): void => {
   ipcMain.handle(IPC_CHANNELS.RESTART_APP, async () => {
@@ -29,7 +30,8 @@ const appRestartHandler = (): void => {
         killOnExit: false
       }
     ];
-
+    await AppLogger.captureScreenshot();
+    await AppLogger.saveDiagnosticLogs();
     await Promise.all(processes.map((config) => processManager.launchProcess(config)));
   });
 };
