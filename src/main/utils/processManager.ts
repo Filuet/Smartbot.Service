@@ -1,6 +1,8 @@
 // utils/processManager.ts
 import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
+import path from 'path';
+import fs from 'fs/promises';
 
 const execAsync = promisify(exec);
 
@@ -11,7 +13,17 @@ export interface ProcessConfig {
   delay?: number; // Delay in ms before starting
   killOnExit?: boolean; // Whether to kill when app exits
 }
+export const getKioskName = async (): Promise<string | null> => {
+  const files = await fs.readdir('C:\\Filuet\\Filuet.ASC.Kiosk');
+  const keyFile = files.find((file) => file.endsWith('.key'));
 
+  if (!keyFile) {
+    console.warn('No .key file found in directory');
+    return null;
+  }
+
+  return path.basename(keyFile, '.key');
+};
 class ProcessManager {
   private childProcesses: ChildProcess[] = [];
 

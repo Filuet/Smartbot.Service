@@ -1,7 +1,8 @@
 import { ipcMain } from 'electron';
-import { ProcessConfig, processManager } from '../utils/processManager';
+import { getKioskName, ProcessConfig, processManager } from '../utils/processManager';
 import { IPC_CHANNELS } from '../../shared/ipcChannels';
 import { AppLogger } from '../utils/appLogger';
+import { emailService } from '../utils/emailService';
 
 const appRestartHandler = (): void => {
   ipcMain.handle(IPC_CHANNELS.RESTART_APP, async () => {
@@ -30,8 +31,24 @@ const appRestartHandler = (): void => {
         killOnExit: false
       }
     ];
-    await AppLogger.captureScreenshot();
-    await AppLogger.saveDiagnosticLogs();
+    const screenshotPath = await AppLogger.captureScreenshot();
+    const logPath = await AppLogger.saveDiagnosticLogs();
+    const kioskName = await getKioskName();
+    await emailService.sendEmail({
+      to: 'minal.kose@filuet.com;ankit.s@filuet.com;shashank.sood@filuet.com',
+      subject: `${kioskName}: Application Restarted`,
+      text: 'The application was restarted. Please find attached logs and screenshot.',
+      attachments: [
+        {
+          filename: 'screenshot.png',
+          path: screenshotPath
+        },
+        {
+          filename: 'logs.txt',
+          path: logPath
+        }
+      ]
+    });
     await Promise.all(processes.map((config) => processManager.launchProcess(config)));
   });
 };
