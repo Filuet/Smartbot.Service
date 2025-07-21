@@ -45,20 +45,40 @@ export class AppLogger {
 
   private static findLatestLogFile(baseDir: string, prefix: string): string | null {
     const dateStr = this.getDateString();
-    const pattern = new RegExp(`^${prefix}_${dateStr}(?:_(\\d+))?\\.txt$`);
     const logDir = path.join(baseDir, prefix);
-    try {
-      const files = fs
-        .readdirSync(logDir)
-        .filter((file) => pattern.test(file))
-        .sort((a, b) => {
-          // Extract sequence numbers (default to 0 if no number)
-          const aNum = parseInt(a.match(/_(\d+)\.txt$/)?.[1] || '0', 10);
-          const bNum = parseInt(b.match(/_(\d+)\.txt$/)?.[1] || '0', 10);
-          return bNum - aNum; // Sort descending
-        });
 
-      return files.length > 0 ? path.join(baseDir, files[0]) : null;
+    try {
+      if (!fs.existsSync(logDir)) {
+        console.error(`Directory not found: ${logDir}`);
+        return null;
+      }
+
+      const files = fs.readdirSync(logDir);
+      if (files.length === 0) {
+        console.error(`No files in directory: ${logDir}`);
+        return null;
+      }
+
+      // Match: prefix_date.txt or prefix_date_001.txt
+      const pattern = new RegExp(`^${prefix}-${dateStr}(?:_(\\d{3}))?\\.txt$`);
+      const filteredFiles = files.filter((file) => pattern.test(file));
+
+      if (filteredFiles.length === 0) {
+        console.error(`No files matched pattern in: ${logDir}`);
+        return null;
+      }
+
+      const sortedFiles = filteredFiles.sort((a, b) => {
+        const getSeq = (filename: string): number => {
+          const parts = filename.split('_');
+          if (parts.length < 3) return 0; // No sequence number
+          const seqPart = parts[2].replace('.txt', '');
+          return parseInt(seqPart, 10) || 0; // Fallback to 0 if NaN
+        };
+        return getSeq(b) - getSeq(a); // Newest first
+      });
+
+      return path.join(logDir, sortedFiles[0]);
     } catch (error) {
       console.error(`Error finding ${prefix} logs:`, error);
       return null;
