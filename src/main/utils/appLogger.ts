@@ -72,8 +72,9 @@ export class AppLogger {
     if (!logPath) return ['[POS] No log file found for today'];
 
     const recentLogs: string[] = [];
-    const nowUtc = new Date();
-    const threshold = nowUtc.getTime() - minutes * 60 * 1000;
+    const now = new Date();
+    const threshold = now.getTime() - minutes * 60 * 1000;
+    let lastValidTimestamp: Date | null = null;
 
     try {
       const fileStream = fs.createReadStream(logPath);
@@ -85,14 +86,20 @@ export class AppLogger {
       for await (const line of rl) {
         const timestampMatch = line.match(/^\[(\d{2}:\d{2}:\d{2}\.\d{3})/);
         if (timestampMatch) {
+          // Parse the timestamp and update lastValidTimestamp
           const [timeStr] = timestampMatch;
           const [hours, minutes, seconds] = timeStr.split(':');
           const logDate = new Date();
-          logDate.setHours(parseInt(hours), parseInt(minutes), parseFloat(seconds));
+          logDate.setHours(parseInt(hours));
+          logDate.setMinutes(parseInt(minutes));
+          logDate.setSeconds(parseInt(seconds.split('.')[0]));
+          logDate.setMilliseconds(parseInt(seconds.split('.')[1]));
+          lastValidTimestamp = logDate;
+        }
 
-          if (logDate.getTime() >= threshold) {
-            recentLogs.push(line);
-          }
+        // If we have a valid timestamp and it's within our threshold, include the line
+        if (lastValidTimestamp && lastValidTimestamp.getTime() >= threshold) {
+          recentLogs.push(line);
         }
       }
 
@@ -107,8 +114,9 @@ export class AppLogger {
     if (!logPath) return ['[UI] No log file found for today'];
 
     const recentLogs: string[] = [];
-    const nowUtc = new Date();
-    const threshold = nowUtc.getTime() - minutes * 60 * 1000;
+    const now = new Date();
+    const threshold = now.getTime() - minutes * 60 * 1000;
+    let lastValidTimestamp: Date | null = null;
 
     try {
       const fileStream = fs.createReadStream(logPath);
@@ -120,10 +128,14 @@ export class AppLogger {
       for await (const line of rl) {
         const timestampMatch = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/);
         if (timestampMatch) {
-          const logDate = new Date(timestampMatch[1].replace(' ', 'T') + 'Z');
-          if (logDate.getTime() >= threshold) {
-            recentLogs.push(line);
-          }
+          // Parse the timestamp and update lastValidTimestamp
+          const logDate = new Date(timestampMatch[1].replace(' ', 'T'));
+          lastValidTimestamp = logDate;
+        }
+
+        // If we have a valid timestamp and it's within our threshold, include the line
+        if (lastValidTimestamp && lastValidTimestamp.getTime() >= threshold) {
+          recentLogs.push(line);
         }
       }
 
