@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import readline from 'readline';
 
-const BASE_FILUET_PATH = 'C:\\Filuet';
+const BASE_FILUET_PATH = 'C:\\Filuet\\logs';
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 export class AppLogger {
   private static ensureLogsDirectory(): string {
@@ -45,16 +45,16 @@ export class AppLogger {
 
   private static findLatestLogFile(baseDir: string, prefix: string): string | null {
     const dateStr = this.getDateString();
-    const pattern = new RegExp(`^${prefix}_${dateStr}(?:_(\\d+))?\\.log$`);
-
+    const pattern = new RegExp(`^${prefix}_${dateStr}(?:_(\\d+))?\\.txt$`);
+    const logDir = path.join(baseDir, prefix);
     try {
       const files = fs
-        .readdirSync(baseDir)
+        .readdirSync(logDir)
         .filter((file) => pattern.test(file))
         .sort((a, b) => {
           // Extract sequence numbers (default to 0 if no number)
-          const aNum = parseInt(a.match(/_(\d+)\.log$/)?.[1] || '0', 10);
-          const bNum = parseInt(b.match(/_(\d+)\.log$/)?.[1] || '0', 10);
+          const aNum = parseInt(a.match(/_(\d+)\.txt$/)?.[1] || '0', 10);
+          const bNum = parseInt(b.match(/_(\d+)\.txt$/)?.[1] || '0', 10);
           return bNum - aNum; // Sort descending
         });
 

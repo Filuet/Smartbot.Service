@@ -1,6 +1,6 @@
 {
   "name": "smartbot.service",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "This app will help you restart your application if you are stuck",
   "main": "./out/main/index.js",
   "author": "https://ogmento.io/",

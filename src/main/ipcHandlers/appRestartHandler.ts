@@ -44,7 +44,7 @@ const appRestartHandler = (): void => {
           path: screenshotPath
         },
         {
-          filename: 'logs.log',
+          filename: 'Diagnostic-logs.log',
           path: logPath
         }
       ]
