@@ -107,13 +107,17 @@ export class AppLogger {
         const timestampMatch = line.match(/^\[(\d{2}:\d{2}:\d{2}\.\d{3})/);
         if (timestampMatch) {
           // Parse the timestamp and update lastValidTimestamp
-          const [timeStr] = timestampMatch;
-          const [hours, minutes, seconds] = timeStr.split(':');
+          const timeStr = timestampMatch[1];
+          const [hours, minutes, secondsWithMs] = timeStr.split(':');
+          const [seconds, milliseconds] = secondsWithMs.split('.');
+
+          // Create a new date with today's date but the log's time
           const logDate = new Date();
-          logDate.setHours(parseInt(hours));
-          logDate.setMinutes(parseInt(minutes));
-          logDate.setSeconds(parseInt(seconds.split('.')[0]));
-          logDate.setMilliseconds(parseInt(seconds.split('.')[1]));
+          logDate.setHours(parseInt(hours, 10));
+          logDate.setMinutes(parseInt(minutes, 10));
+          logDate.setSeconds(parseInt(seconds, 10));
+          logDate.setMilliseconds(parseInt(milliseconds, 10));
+
           lastValidTimestamp = logDate;
         }
 
