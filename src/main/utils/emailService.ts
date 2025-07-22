@@ -26,10 +26,15 @@ export class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
-    await this.transporter.sendMail({
-      from: `"Kiosk Alerts" <asc@filuet.com>`,
-      ...options
-    });
+    try {
+      await this.transporter.sendMail({
+        from: `"Kiosk Alerts" <asc@filuet.com>`,
+        ...options
+      });
+      console.log(`Email sent to ${options.to} with subject "${options.subject}"`);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+    }
   }
 }
 
