@@ -126,7 +126,7 @@ export class AppLogger {
           recentLogs.push(line);
         }
       }
-
+      console.log(`Found ${recentLogs.length} recent pos logs`);
       return recentLogs;
     } catch (error) {
       console.error('Error reading POS logs:', error);
@@ -162,7 +162,7 @@ export class AppLogger {
           recentLogs.push(line);
         }
       }
-
+      console.log(`Found ${recentLogs.length} recent UI logs`);
       return recentLogs;
     } catch (error) {
       console.error('Error reading UI logs:', error);
