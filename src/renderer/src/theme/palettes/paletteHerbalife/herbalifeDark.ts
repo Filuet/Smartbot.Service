@@ -1,4 +1,4 @@
-export const oriflameDark = {
+export const herbalifeDark = {
   // Common colors
   commonBlack: '#000000',
   commonWhite: '#FFFFFF',

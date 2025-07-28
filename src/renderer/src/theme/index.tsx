@@ -18,8 +18,8 @@ export interface ThemeCustomizationProps {
 export default function ThemeCustomization({
   children,
   mode = 'light',
-  presetColor = 'themeOriflame',
-  fontFamily = 'SansOri,sans-serif',
+  presetColor = 'themeHerbalife',
+  fontFamily = 'Roboto',
   direction = 'ltr'
 }: ThemeCustomizationProps) {
   const theme = useMemo(() => Palette(presetColor, mode), [presetColor, mode]);

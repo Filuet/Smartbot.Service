@@ -2,9 +2,8 @@ import { createTheme, Theme } from '@mui/material/styles';
 
 import { lightDefault } from './paletteDefault/lightDefault';
 import { darkDefault } from './paletteDefault/darkDefault';
-
-import { oriflameLight } from './paletteHerbalife/herbalifeLight';
-import { oriflameDark } from './paletteHerbalife/herbalifeDark';
+import { herbalifeDark } from './paletteHerbalife/herbalifeDark';
+import { herbalifeLight } from './paletteHerbalife/herbalifeLight';
 
 declare module '@mui/material/styles' {
   interface TypeText {
@@ -16,8 +15,8 @@ declare module '@mui/material/styles' {
 
 const Palette = (presetColor: string, mode: 'light' | 'dark'): Theme => {
   let colors;
-  if (presetColor === 'themeOriflame') {
-    colors = mode === 'dark' ? oriflameDark : oriflameLight;
+  if (presetColor === 'themeHerbalife') {
+    colors = mode === 'dark' ? herbalifeDark : herbalifeLight;
   } else {
     colors = mode === 'dark' ? darkDefault : lightDefault;
   }

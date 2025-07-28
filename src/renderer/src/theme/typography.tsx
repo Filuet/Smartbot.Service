@@ -79,15 +79,8 @@ const Typography = (theme: Theme, fontFamily: string): TypographyOptions => ({
   button: {
     fontSize: '0.875rem',
     fontWeight: 500,
-    textTransform: 'uppercase',
+    textTransform: 'normal',
     lineHeight: 1.75
-  },
-  overline: {
-    fontSize: '0.75rem',
-    fontWeight: 'normal',
-    textTransform: 'uppercase',
-    lineHeight: 2,
-    color: theme.palette.text.secondary
   }
 });
 

@@ -1,45 +1,46 @@
-export const oriflameLight = {
+export const herbalifeLight = {
   commonBlack: '#000000',
   commonWhite: '#FFFFFF',
 
-  backgroundDefault: '#68BB9314',
+  backgroundDefault: '',
   backgroundPaper: '#FFFFFF',
 
-  primaryLight: '#060606',
-  primaryMain: '#000000',
-  primaryDark: '#333333',
+  primaryLight: '#42A046',
+  primaryMain: '#7BC143', // this is i have given
+  primaryDark: '#387C2B',
   primaryContrastText: '#FFFFFF',
-  secondaryLight: '#81C784',
-  secondaryMain: '#9CDABC',
-  secondaryDark: '#388E3C',
+
+  secondaryLight: '#7BC143',
+  secondaryMain: '#5BB75B',
+  secondaryDark: '#387C2B',
   secondaryContrastText: '#FFFFFF',
 
-  errorLight: '#FFCDD2',
-  errorMain: '#C94B22',
-  errorDark: '#D32F2F',
+  errorLight: '#F5866B',
+  errorMain: '#E31836',
+  errorDark: '#C41230',
   errorContrastText: '#FFFFFF',
 
-  warningLight: '#FFE082',
-  warningMain: '#FFEB3B',
-  warningDark: '#F57C00',
+  warningLight: '#F89828',
+  warningMain: '#F37421',
+  warningDark: '#D06F1A',
   warningContrastText: '#000000',
 
-  infoLight: '#80DEEA',
-  infoMain: '#03A9F4',
-  infoDark: '#0288D1',
+  infoLight: '#96C0E6',
+  infoMain: '#5190CD',
+  infoDark: '#005288',
   infoContrastText: '#FFFFFF',
 
-  successLight: '#A5D6A7',
-  successMain: '#66BB6A',
-  successDark: '#388E3C',
+  successLight: '#A0CE67',
+  successMain: '#73C167',
+  successDark: '#387C2B',
   successContrastText: '#FFFFFF',
 
-  textPrimary: '#000000',
+  textPrimary: '#2F3B41', // this is  i have given
   textSecondary: '#6E6E6E',
   textDisabled: '#BDBDBD',
   textHint: '#BDBDBD',
 
-  divider: '#9CDABC',
+  divider: '#eee8e8ff',
 
   actionActive: '#6D6D6D',
   actionHover: 'rgba(0, 0, 0, 0.08)',
