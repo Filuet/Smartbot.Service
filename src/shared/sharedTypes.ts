@@ -4,7 +4,7 @@ export interface ElectronBridgeAPI extends ElectronAPI {
   windowMoveResize: {
     moveWindow: (x: number, y: number) => void;
     getPosition: () => Promise<[number, number]>;
-    setWindowSize: (width: number, height: number) => void;
+    setWindowSize: (width: number, height: number, positionX?: number, positionY?: number) => void;
   };
   restartAppUtils: {
     restartApp: () => Promise<void>;

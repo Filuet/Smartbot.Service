@@ -23,6 +23,10 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "@fontsource/roboto": "^5.2.6",
+    "@mui/icons-material": "^7.2.0",
+    "@mui/material": "^7.2.0",
+    "@mui/system": "^7.2.0",
     "electron-updater": "^6.3.9",
     "nodemailer": "^7.0.5",
     "react-draggable": "^4.5.0"
@@ -78,4 +82,3 @@
     ]
   }
 }
-
