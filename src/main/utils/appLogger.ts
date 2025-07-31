@@ -170,12 +170,12 @@ export class AppLogger {
     }
   }
 
-  static async saveDiagnosticLogs(): Promise<string | null> {
+  static async saveDiagnosticLogs(): Promise<string[] | null> {
     try {
       const logsPath = this.ensureLogsDirectory();
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const logFilePath = path.join(logsPath, `diagnostic-${timestamp}.log`);
-
+      const posFilePath = path.join(logsPath, `pos-${timestamp}.log`);
+      const uiFilePath = path.join(logsPath, `ui-${timestamp}.log`);
       // Find latest log files
       const posLogPath = this.findLatestLogFile(BASE_FILUET_PATH, 'pos');
       const uiLogPath = this.findLatestLogFile(BASE_FILUET_PATH, 'ui');
@@ -185,21 +185,28 @@ export class AppLogger {
         this.getRecentPosLogs(posLogPath, 5),
         this.getRecentUiLogs(uiLogPath, 5)
       ]);
-
-      // Create combined log content
-      const combinedLogs = [
-        `=== Diagnostic Log ${new Date().toISOString()} ===`,
+      const recentPosLogs = [
+        `=== Diagnostic POS Log ${new Date().toISOString()} ===`,
         `Source POS Log: ${posLogPath || 'Not found'}`,
-        `Source UI Log: ${uiLogPath || 'Not found'}`,
+
         `=== Last 5 Minutes of POS Logs ===`,
         ...posLogs,
-        ``,
-        `=== Last 5 Minutes of UI Logs ===`,
-        ...uiLogs
+        ``
       ];
+      const recentUILogs = [
+        `=== Diagnostic UI Log ${new Date().toISOString()} ===`,
+        `Source UI Log: ${uiLogPath || 'Not found'}`,
 
-      fs.writeFileSync(logFilePath, combinedLogs.join('\n'));
-      return logFilePath;
+        `=== Last 5 Minutes of UI Logs ===`,
+        ...uiLogs,
+        ``
+      ];
+      // Create combined log content
+
+      fs.writeFileSync(posFilePath, recentPosLogs.join('\n'));
+      fs.writeFileSync(uiFilePath, recentUILogs.join('\n'));
+
+      return [posFilePath, uiFilePath];
     } catch (error) {
       console.error('Failed to create diagnostic log:', error);
       return null;

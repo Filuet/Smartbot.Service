@@ -29,6 +29,7 @@
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@mui/system": "^7.2.0",
+    "axios": "^1.11.0",
     "electron-updater": "^6.3.9",
     "nodemailer": "^7.0.5",
     "react-draggable": "^4.5.0"

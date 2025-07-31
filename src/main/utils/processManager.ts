@@ -47,9 +47,6 @@ class ProcessManager {
   }
 
   async launchProcess(config: ProcessConfig): Promise<ChildProcess> {
-    // Kill existing instances first
-    await this.killProcess(config.name);
-
     return new Promise((resolve) => {
       const start = (): void => {
         const child = spawn(config.command, config.args || [], {

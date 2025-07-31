@@ -1,11 +1,23 @@
 import { Dialog, LinearProgress, Typography, useTheme } from '@mui/material';
-import { JSX, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import HerbalifeLogo from '../../assets/HerbalifeFullLogo.png';
 import { Box } from '@mui/system';
 
 function LoaderUtil(): JSX.Element {
-  const [progress, setProgress] = useState<number>(300);
+  const [progress, setProgress] = useState<number>(0);
   const theme = useTheme();
+  useEffect(() => {
+    const handleProgressUpdate = (progress: number, message: string): void => {
+      setProgress(progress);
+      console.log(`Progress: ${progress}, Message: ${message}`);
+    };
+
+    window.electron.restartAppUtils.onProgressUpdate(handleProgressUpdate);
+
+    return () => {
+      window.electron.restartAppUtils.removeProgressListeners();
+    };
+  }, []);
   return (
     <Dialog
       open
@@ -38,7 +50,7 @@ function LoaderUtil(): JSX.Element {
         >
           <LinearProgress
             variant="determinate"
-            value={progress / 20}
+            value={progress}
             sx={{
               '&.MuiLinearProgress-root': {
                 width: '80%',
