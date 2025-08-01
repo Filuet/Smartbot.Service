@@ -23,11 +23,13 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const updateRestartState = (isRestarted: boolean): void => {
       console.log(`Restart state updated: ${isRestarted}`);
+      setRestart(isRestarted);
+
       if (!isRestarted) {
-        setShowMenuDialog(false);
         window.electron.windowMoveResize.setWindowSize(50, 50);
       }
-      setRestart(isRestarted);
+      console.log(`Restart state: ${restart}`);
+      console.log(`showMenuDialog: ${showMenuDialog}`);
     };
     window.electron.restartAppUtils.onRestartDone(updateRestartState);
     return () => {
@@ -123,16 +125,23 @@ function App(): React.JSX.Element {
     document.addEventListener('touchend', cleanup, { once: true });
   };
   useEffect(() => {
-    if (restart) {
+    console.log(`Restart state: ${restart}`);
+    console.log(`showMenuDialog: ${showMenuDialog}`);
+    if (restart && !showMenuDialog) {
+      console.log('Setting window size to 1920x1080 at position 300,300');
       window.electron.windowMoveResize.setWindowSize(1920, 1080, 0, 0);
-    } else if (showMenuDialog) {
+    }
+    if (showMenuDialog && !restart) {
+      console.log('Setting window size to 692x429 at position 300,300');
       window.electron.windowMoveResize.setWindowSize(692, 429, 300, 300);
-    } else {
+    } else if (!showMenuDialog && !restart) {
+      console.log('Setting window size to 50x50');
       window.electron.windowMoveResize.setWindowSize(50, 50);
     }
   }, [showMenuDialog, restart]);
   return (
     <>
+      {restart && !showMenuDialog && <LoaderUtil />}
       {!showMenuDialog && !restart && (
         <div
           ref={iconRef}
@@ -145,7 +154,6 @@ function App(): React.JSX.Element {
           <img src={botLogo} alt="Bot" style={styles.botImageStyles} />
         </div>
       )}
-      {restart && <LoaderUtil />}
       <Dialog open={showMenuDialog} onClose={() => setShowMenuDialog(false)} fullScreen>
         <Box
           sx={{
@@ -208,6 +216,7 @@ function App(): React.JSX.Element {
             variant="contained"
             onClick={() => {
               setShowMenuDialog(false);
+              setRestart(true);
               restartApp();
             }}
           >

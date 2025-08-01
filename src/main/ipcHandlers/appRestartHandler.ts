@@ -31,7 +31,6 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     return isOpen;
   };
   ipcMain.handle(IPC_CHANNELS.RESTART_APP, async () => {
-    setRestart(true);
     const processesToKill: string[] = ['Filuet.PosAgent', 'Filuet.ASC.Kiosk', 'chrome'];
 
     const processesToLaunch: ProcessConfig[] = [
