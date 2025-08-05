@@ -21,6 +21,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
   };
   const IsWebsiteLoaded = async (): Promise<boolean> => {
     const res = await axios.get('http://localhost:9222/json');
+    console.log('Response from localhost:9222/json:', res.data);
     const tabs = res.data;
 
     if (tabs.length === 0) {
@@ -53,9 +54,10 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           '--disable-pinch',
           '--overscroll-history-navigation=0',
           '--remote-debugging-port=9222',
+          '--user-data-dir=C:\\temp\\chrome-remote-profile', // Add this line
           'http://localhost:5000'
         ],
-        delay: 12000, // 12 seconds
+        delay: 8000, // 12 seconds
         killOnExit: false
       }
     ];
