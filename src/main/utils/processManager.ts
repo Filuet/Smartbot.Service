@@ -3,6 +3,7 @@ import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 
 const execAsync = promisify(exec);
 
@@ -38,12 +39,8 @@ const getChromeExecutablePath = (): string => {
   ];
 
   for (const chromePath of possiblePaths) {
-    try {
-      if (require('fs').existsSync(chromePath)) {
-        return chromePath;
-      }
-    } catch (error) {
-      // Continue to next path
+    if (existsSync(chromePath)) {
+      return chromePath;
     }
   }
 
@@ -89,8 +86,11 @@ class ProcessManager {
           await execAsync(`taskkill /IM "${processName}.exe" /F`);
           console.log(`Force killed process: ${processName}.exe (alternative method)`);
         }
-      } catch (alternativeError) {
-        console.log(`Process ${processName}.exe was not running or could not be killed`);
+      } catch (error: unknown) {
+        console.log(
+          `Process ${processName}.exe was not running or could not be killed`,
+          error instanceof Error ? error.message : error
+        );
       }
     }
   }
