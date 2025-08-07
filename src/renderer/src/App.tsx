@@ -129,7 +129,7 @@ function App(): React.JSX.Element {
     console.log(`showMenuDialog: ${showMenuDialog}`);
     if (restart && !showMenuDialog) {
       console.log('Setting window size to 1920x1080 at position 300,300');
-      window.electron.windowMoveResize.setWindowSize(1920, 1080, 0, 0);
+      window.electron.windowMoveResize.setWindowSize(768, 1366, 0, 0);
     }
     if (showMenuDialog && !restart) {
       console.log('Setting window size to 692x429 at position 300,300');

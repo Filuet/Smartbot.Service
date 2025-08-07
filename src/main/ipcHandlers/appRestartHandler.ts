@@ -102,6 +102,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           sendProgressUpdate(progress, `${config.name} restarted`);
         })
       );
+      sendProgressUpdate(95, `waiting for website to load`);
       const isWebsiteLoaded = await IsWebsiteLoaded();
       if (isWebsiteLoaded) {
         sendProgressUpdate(100, 'Application restarted successfully');
