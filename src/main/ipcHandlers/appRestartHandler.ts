@@ -32,8 +32,9 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     return isOpen;
   };
   ipcMain.handle(IPC_CHANNELS.RESTART_APP, async () => {
+    const screenshotPath = await AppLogger.captureScreenshot();
+    setRestart(true);
     const processesToKill: string[] = ['Filuet.PosAgent', 'Filuet.ASC.Kiosk', 'chrome'];
-
     const processesToLaunch: ProcessConfig[] = [
       {
         name: 'Filuet.PosAgent',
@@ -61,7 +62,6 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
         killOnExit: false
       }
     ];
-    const screenshotPath = await AppLogger.captureScreenshot();
     const logPath = await AppLogger.saveDiagnosticLogs();
     const kioskName = await getKioskName();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -98,7 +98,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
         processesToLaunch.map(async (config, index) => {
           console.log(`Restarting process: ${config.name}`);
           await processManager.launchProcess(config);
-          const progress = 10 + (index + 1) * (60 / processesToKill.length);
+          const progress = 10 + (index + 1) * (90 / processesToKill.length);
           sendProgressUpdate(progress, `${config.name} restarted`);
         })
       );

@@ -22,11 +22,9 @@ function App(): React.JSX.Element {
   };
   useEffect(() => {
     const updateRestartState = (isRestarted: boolean): void => {
-      console.log(`Restart state updated: ${isRestarted}`);
       setRestart(isRestarted);
-
-      if (!isRestarted) {
-        window.electron.windowMoveResize.setWindowSize(50, 50);
+      if (isRestarted) {
+        window.electron.windowMoveResize.setWindowSize(768, 1366, 0, 0);
       }
       console.log(`Restart state: ${restart}`);
       console.log(`showMenuDialog: ${showMenuDialog}`);
@@ -127,10 +125,6 @@ function App(): React.JSX.Element {
   useEffect(() => {
     console.log(`Restart state: ${restart}`);
     console.log(`showMenuDialog: ${showMenuDialog}`);
-    if (restart && !showMenuDialog) {
-      console.log('Setting window size to 1920x1080 at position 300,300');
-      window.electron.windowMoveResize.setWindowSize(768, 1366, 0, 0);
-    }
     if (showMenuDialog && !restart) {
       console.log('Setting window size to 692x429 at position 300,300');
       window.electron.windowMoveResize.setWindowSize(692, 429, 300, 300);
@@ -216,7 +210,7 @@ function App(): React.JSX.Element {
             variant="contained"
             onClick={() => {
               setShowMenuDialog(false);
-              setRestart(true);
+              // setRestart(true);
               restartApp();
             }}
           >
