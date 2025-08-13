@@ -52,7 +52,7 @@ const windowMoveResizeIpc = (mainWindow: BrowserWindow): void => {
           width: width,
           height: height
         });
-
+        win.setSkipTaskbar(true);
         // Show window and ensure proper state
         win.show();
         win.focus();
