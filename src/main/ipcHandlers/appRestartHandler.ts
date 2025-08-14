@@ -112,10 +112,12 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
         console.error('Website did not load after restart');
       }
     } catch (error: Error | unknown) {
-      sendProgressUpdate(-1, `Restart failed: ${(error as Error).message}`);
+      sendProgressUpdate(-1, `Restart failed: ${error}`);
       console.error('Error during application restart:', error);
     } finally {
-      setRestart(false);
+      setTimeout(() => {
+        setRestart(false);
+      }, 5000);
     }
   });
 };
