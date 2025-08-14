@@ -20,6 +20,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     }
   };
   const IsWebsiteLoaded = async (): Promise<boolean> => {
+    console.log('Checking if website is loaded...');
     const res = await axios.get('http://localhost:9222/json');
     console.log('Response from localhost:9222/json:', res.data);
     const tabs = res.data;
@@ -98,7 +99,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
         processesToLaunch.map(async (config, index) => {
           console.log(`Restarting process: ${config.name}`);
           await processManager.launchProcess(config);
-          const progress = 10 + (index + 1) * (90 / processesToKill.length);
+          const progress = 10 + (index + 1) * (60 / processesToKill.length);
           sendProgressUpdate(progress, `${config.name} restarted`);
         })
       );
