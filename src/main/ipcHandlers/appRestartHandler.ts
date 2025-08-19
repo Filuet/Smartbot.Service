@@ -43,11 +43,11 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     setRestart(true);
     const processesToKill: string[] = ['Filuet.PosAgent', 'Filuet.ASC.Kiosk', 'chrome'];
     const processesToLaunch: ProcessConfig[] = [
-      // {
-      //   name: 'Filuet.PosAgent',
-      //   command: 'C:\\Filuet\\Filuet.Pos.Agent\\Filuet.PosAgent.exe',
-      //   killOnExit: false
-      // },
+      {
+        name: 'Filuet.PosAgent',
+        command: 'C:\\Filuet\\Filuet.Pos.Agent\\Filuet.PosAgent.exe',
+        killOnExit: false
+      },
       {
         name: 'Filuet.ASC.Kiosk',
         command: 'C:\\Filuet\\Filuet.ASC.Kiosk\\Filuet.ASC.Kiosk.exe',

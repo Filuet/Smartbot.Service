@@ -1,4 +1,4 @@
-import { is } from '@electron-toolkit/utils';
+// import { is } from '@electron-toolkit/utils';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -22,21 +22,21 @@ export class Logger {
     console.log(message, ...args);
 
     // Write to file
-    if (is.dev) {
-      const timestamp = new Date().toISOString();
-      const logMessage = `[${timestamp}] ${message} ${args.length > 0 ? JSON.stringify(args) : ''}\n`;
-      this.logStream.write(logMessage);
-    }
+    // if (is.dev) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message} ${args.length > 0 ? JSON.stringify(args) : ''}\n`;
+    this.logStream.write(logMessage);
+    // }
   }
 
   error(message: string, ...args: unknown[]): void {
     console.error(message, ...args);
-    if (is.dev) {
-      const timestamp = new Date().toISOString();
-      const errorMessage = `[${timestamp}] ERROR: ${message} ${args.length > 0 ? JSON.stringify(args) : ''}\n`;
+    // if (is.dev) {
+    const timestamp = new Date().toISOString();
+    const errorMessage = `[${timestamp}] ERROR: ${message} ${args.length > 0 ? JSON.stringify(args) : ''}\n`;
 
-      this.logStream.write(errorMessage);
-    }
+    this.logStream.write(errorMessage);
+    // }
   }
 
   close(): void {
