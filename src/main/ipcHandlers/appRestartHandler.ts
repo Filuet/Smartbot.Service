@@ -37,11 +37,11 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     setRestart(true);
     const processesToKill: string[] = ['Filuet.PosAgent', 'Filuet.ASC.Kiosk', 'chrome'];
     const processesToLaunch: ProcessConfig[] = [
-      {
-        name: 'Filuet.PosAgent',
-        command: 'C:\\Filuet\\Filuet.Pos.Agent\\Filuet.PosAgent.exe',
-        killOnExit: false
-      },
+      // {
+      //   name: 'Filuet.PosAgent',
+      //   command: 'C:\\Filuet\\Filuet.Pos.Agent\\Filuet.PosAgent.exe',
+      //   killOnExit: false
+      // },
       {
         name: 'Filuet.ASC.Kiosk',
         command: 'C:\\Filuet\\Filuet.ASC.Kiosk\\Filuet.ASC.Kiosk.exe',
@@ -95,21 +95,28 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
         })
       );
       sendProgressUpdate(20, `processes killed`);
-      await Promise.all(
-        processesToLaunch.map(async (config, index) => {
-          console.log(`Restarting process: ${config.name}`);
+      let currentProgress = 20;
+      const progressIncrement = 70 / processesToLaunch.length;
+      for (const config of processesToLaunch) {
+        try {
+          console.log(`Launching process: ${config.name}`);
           await processManager.launchProcess(config);
-          const progress = 10 + (index + 1) * (60 / processesToKill.length);
-          sendProgressUpdate(progress, `${config.name} restarted`);
-        })
-      );
+          currentProgress += progressIncrement;
+          sendProgressUpdate(Math.round(currentProgress), `${config.name} launched`);
+        } catch (error) {
+          console.error(`Failed to launch process ${config.name}:`, error);
+          sendProgressUpdate(-3, `Failed to launch ${config.name}`);
+          return;
+        }
+      }
+
       sendProgressUpdate(95, `waiting for website to load`);
       const isWebsiteLoaded = await IsWebsiteLoaded();
       if (isWebsiteLoaded) {
         sendProgressUpdate(100, 'Application restarted successfully');
         console.log('Application restarted successfully');
       } else {
-        sendProgressUpdate(-1, 'Website did not load after restart');
+        sendProgressUpdate(-2, 'Website did not load after restart');
         console.error('Website did not load after restart');
       }
     } catch (error: Error | unknown) {
@@ -118,7 +125,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     } finally {
       setTimeout(() => {
         setRestart(false);
-      }, 5000);
+      }, 6000);
     }
   });
 };
