@@ -4,6 +4,7 @@ import { IPC_CHANNELS } from '../../shared/ipcChannels';
 import { AppLogger } from '../utils/appLogger';
 import { emailService } from '../utils/emailService';
 import axios from 'axios';
+import { logger } from '../utils/logger';
 
 const appRestartHandler = (mainWindow: BrowserWindow): void => {
   const sendProgressUpdate = (progress: number, message: string): void => {
@@ -20,17 +21,22 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     }
   };
   const IsWebsiteLoaded = async (): Promise<boolean> => {
-    console.log('Checking if website is loaded...');
-    const res = await axios.get('http://localhost:9222/json');
-    console.log('Response from localhost:9222/json:', res.data);
-    const tabs = res.data;
+    try {
+      logger.log('Checking if website is loaded...');
+      const res = await axios.get('http://localhost:9222/json');
+      logger.log('Response from localhost:9222/json:', res.data);
+      const tabs = res.data;
 
-    if (tabs.length === 0) {
-      console.log('No tabs open');
+      if (tabs.length === 0) {
+        logger.log('No tabs open');
+        return false;
+      }
+      const isOpen: boolean = tabs.some((tab) => tab.url && tab.url.includes('localhost:5000'));
+      return isOpen;
+    } catch (error) {
+      logger.error('-4 Error checking website load status:', error);
       return false;
     }
-    const isOpen: boolean = tabs.some((tab) => tab.url && tab.url.includes('localhost:5000'));
-    return isOpen;
   };
   ipcMain.handle(IPC_CHANNELS.RESTART_APP, async () => {
     const screenshotPath = await AppLogger.captureScreenshot();
@@ -85,12 +91,12 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
         }
       ]
     });
-    console.log('Application restart initiated');
+    logger.log('Application restart initiated');
     sendProgressUpdate(10, 'Preparing to restart...');
     try {
       await Promise.all(
         processesToKill.map(async (processName) => {
-          console.log(`Killing process: ${processName}`);
+          logger.log(`Killing process: ${processName}`);
           await processManager.killProcess(processName);
         })
       );
@@ -99,12 +105,12 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
       const progressIncrement = 70 / processesToLaunch.length;
       for (const config of processesToLaunch) {
         try {
-          console.log(`Launching process: ${config.name}`);
+          logger.log(`Launching process: ${config.name}`);
           await processManager.launchProcess(config);
           currentProgress += progressIncrement;
           sendProgressUpdate(Math.round(currentProgress), `${config.name} launched`);
         } catch (error) {
-          console.error(`Failed to launch process ${config.name}:`, error);
+          logger.error(`-3 Failed to launch process ${config.name}:`, error);
           sendProgressUpdate(-3, `Failed to launch ${config.name}`);
           return;
         }
@@ -114,14 +120,14 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
       const isWebsiteLoaded = await IsWebsiteLoaded();
       if (isWebsiteLoaded) {
         sendProgressUpdate(100, 'Application restarted successfully');
-        console.log('Application restarted successfully');
+        logger.log('Application restarted successfully');
       } else {
         sendProgressUpdate(-2, 'Website did not load after restart');
-        console.error('Website did not load after restart');
+        logger.error('-2 Website did not load after restart');
       }
     } catch (error: Error | unknown) {
       sendProgressUpdate(-1, `Restart failed: ${error}`);
-      console.error('Error during application restart:', error);
+      logger.error(`-1 Error during application restart:${error}`);
     } finally {
       setTimeout(() => {
         setRestart(false);

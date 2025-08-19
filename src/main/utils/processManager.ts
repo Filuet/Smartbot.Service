@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { logger } from './logger';
 
 const execAsync = promisify(exec);
 
@@ -20,7 +21,7 @@ export const getKioskName = async (): Promise<string | null> => {
   const keyFile = files.find((file) => file.endsWith('.key'));
 
   if (!keyFile) {
-    console.warn('No .key file found in directory');
+    logger.error('No .key file found in directory');
     return null;
   }
 
@@ -60,9 +61,9 @@ class ProcessManager {
 
         if (isProcessRunning) {
           await execAsync(`taskkill /IM "${processName}.exe" /F`);
-          console.log(`Successfully killed process: ${processName}.exe`);
+          logger.log(`Successfully killed process: ${processName}.exe`);
         } else {
-          console.log(`Process ${processName}.exe is not running`);
+          logger.log(`Process ${processName}.exe is not running`);
         }
       } else {
         // Unix-like systems
@@ -73,21 +74,21 @@ class ProcessManager {
           } else {
             await execAsync(`pkill ${processName}`);
           }
-          console.log(`Successfully killed process: ${processName}`);
+          logger.log(`Successfully killed process: ${processName}`);
         } else {
-          console.log(`Process ${processName} is not running`);
+          logger.log(`Process ${processName} is not running`);
         }
       }
     } catch (error) {
-      console.error(`Error managing process ${processName}:`, error);
+      logger.error(`Error managing process ${processName}:`, error);
       // Try direct kill without checking if process exists
       try {
         if (process.platform === 'win32') {
           await execAsync(`taskkill /IM "${processName}.exe" /F`);
-          console.log(`Force killed process: ${processName}.exe (alternative method)`);
+          logger.log(`Force killed process: ${processName}.exe (alternative method)`);
         }
       } catch (error: unknown) {
-        console.log(
+        logger.error(
           `Process ${processName}.exe was not running or could not be killed`,
           error instanceof Error ? error.message : error
         );
@@ -102,10 +103,10 @@ class ProcessManager {
         let command = config.command;
         if (config.command === 'chrome') {
           command = getChromeExecutablePath();
-          console.log(`Using Chrome path: ${command}`);
+          logger.log(`Using Chrome path: ${command}`);
         }
 
-        console.log(`Starting process: ${command} with args:`, config.args);
+        logger.log(`Starting process: ${command} with args: ${config.args}`);
 
         // For paths with spaces, we need to quote them properly or not use shell
         const child = spawn(command, config.args || [], {
@@ -118,15 +119,15 @@ class ProcessManager {
         let hasResolved = false;
 
         child.stdout?.on('data', (data) => {
-          console.log(`${command} stdout:`, data.toString());
+          logger.log(`${command} stdout:`, data.toString());
         });
 
         child.stderr?.on('data', (data) => {
-          console.error(`${command} stderr:`, data.toString());
+          logger.error(`${command} stderr:`, data.toString());
         });
 
         child.on('error', (error) => {
-          console.error(`Failed to start ${command}:`, error);
+          logger.error(`Failed to start ${command}:`, error);
           if (!hasResolved) {
             hasResolved = true;
             reject(error);
@@ -134,7 +135,7 @@ class ProcessManager {
         });
 
         child.on('spawn', () => {
-          console.log(`Successfully spawned: ${command} with PID: ${child.pid}`);
+          logger.log(`Successfully spawned: ${command} with PID: ${child.pid}`);
           if (!hasResolved) {
             hasResolved = true;
             resolve(child);
@@ -142,11 +143,11 @@ class ProcessManager {
         });
 
         child.on('exit', (code, signal) => {
-          console.log(`Process ${command} exited with code: ${code}, signal: ${signal}`);
+          logger.log(`Process ${command} exited with code: ${code}, signal: ${signal}`);
         });
 
         child.on('close', (code, signal) => {
-          console.log(`Process ${command} closed with code: ${code}, signal: ${signal}`);
+          logger.log(`Process ${command} closed with code: ${code}, signal: ${signal}`);
         });
 
         if (config.killOnExit) {
@@ -157,7 +158,7 @@ class ProcessManager {
         setTimeout(() => {
           if (!hasResolved) {
             hasResolved = true;
-            console.log(`Resolving ${command} after timeout`);
+            logger.log(`Resolving ${command} after timeout`);
             resolve(child);
           }
         }, 2000);
@@ -183,7 +184,7 @@ class ProcessManager {
           }
         }
       } catch (err) {
-        console.error('Error killing process:', err);
+        logger.error('Error killing process:', err);
       }
     });
   }

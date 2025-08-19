@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { logger } from './logger';
 
 interface EmailOptions {
   to: string;
@@ -31,9 +32,9 @@ export class EmailService {
         from: `"Kiosk Alerts" <asc@filuet.com>`,
         ...options
       });
-      console.log(`Email sent to ${options.to} with subject "${options.subject}"`);
+      logger.log(`Email sent to ${options.to} with subject "${options.subject}"`);
     } catch (error) {
-      console.error('Failed to send email:', error);
+      logger.error('Failed to send email:', error);
     }
   }
 }
