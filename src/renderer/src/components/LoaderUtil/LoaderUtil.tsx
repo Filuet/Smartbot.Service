@@ -109,7 +109,7 @@ function LoaderUtil(): JSX.Element {
               >
                 <Typography
                   variant="body1"
-                  sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red' }}
+                  sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red', marginBottom: '2rem' }}
                 >
                   {restartUpdate}
                 </Typography>
