@@ -55,55 +55,57 @@ function LoaderUtil(): JSX.Element {
         >
           {progress >= 0 && (
             <>
-              <LinearProgress
-                variant="determinate"
-                value={progress}
-                sx={{
-                  '&.MuiLinearProgress-root': {
-                    width: '80%',
-                    height: '1.5rem',
-                    borderRadius: '0.5rem',
-                    color: theme.palette.primary.main
-                  },
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: '0.18rem'
-                  }
-                }}
-              />
-              <Typography
-                variant="body2"
-                sx={{ fontSize: '1.1rem' }}
-              >{`${Math.round(progress)}%`}</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                <Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={progress}
+                    sx={{
+                      '&.MuiLinearProgress-root': {
+                        width: '80%',
+                        height: '1.5rem',
+                        borderRadius: '0.5rem',
+                        color: theme.palette.primary.main
+                      },
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: '0.18rem'
+                      }
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: '1.1rem' }}
+                  >{`${Math.round(progress)}%`}</Typography>
+                </Box>
+
+                {(restartUpdate.includes(RESTART_STATUS.Retrying) ||
+                  restartUpdate.includes(RESTART_STATUS.WebsiteToLoad)) && (
+                  <Typography variant="body2" sx={{ fontSize: '1rem', color: 'red' }}>
+                    {restartUpdate}
+                  </Typography>
+                )}
+              </Box>
             </>
           )}
           {progress === -1 && (
             <>
-              <Box>
+              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                 <Typography
                   variant="body1"
                   sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red' }}
                 >
                   {restartUpdate}
                 </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    restartApp();
+                  }}
+                >
+                  Try Again
+                </Button>
               </Box>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  restartApp();
-                }}
-              >
-                Try Again
-              </Button>
             </>
-          )}
-          {(restartUpdate.includes(RESTART_STATUS.Retrying) ||
-            restartUpdate.includes(RESTART_STATUS.WebsiteToLoad)) && (
-            <Typography
-              variant="body2"
-              sx={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'red' }}
-            >
-              {restartUpdate}
-            </Typography>
           )}
         </Box>
       </Box>
