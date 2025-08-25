@@ -127,7 +127,7 @@ function LoaderUtil(): JSX.Element {
                         fontSize: '1.5rem',
                         fontWeight: 'bold',
                         color: 'red',
-                        marginBottom: '2rem'
+                        marginBottom: '0.5rem'
                       }}
                     >
                       Support has been notified.
@@ -141,7 +141,7 @@ function LoaderUtil(): JSX.Element {
                         marginBottom: '2rem'
                       }}
                     >
-                      You can tru again.
+                      You can try again.
                     </Typography>
                     <Button
                       variant="contained"
@@ -155,14 +155,28 @@ function LoaderUtil(): JSX.Element {
                 )}
 
                 {tryAgainCount > 2 && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '2rem'
-                    }}
-                  >
-                    Contact support immediately
-                  </Typography>
+                  <>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontSize: '2rem',
+                        fontWeight: 'bold',
+                        color: 'red',
+                        marginBottom: '0.5rem'
+                      }}
+                    >
+                      {restartUpdate}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '2rem',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Contact support immediately
+                    </Typography>
+                  </>
                 )}
               </Box>
             </>
