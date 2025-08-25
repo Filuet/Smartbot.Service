@@ -9,8 +9,12 @@ function LoaderUtil(): JSX.Element {
   const theme = useTheme();
   const [restartUpdate, setRestartUpdate] = useState<string>('');
   const restartApp = async (): Promise<void> => {
+    setTryAgainCount((prev) => {
+      return prev + 1;
+    });
     await window.electron.restartAppUtils.restartApp();
   };
+  const [tryAgainCount, setTryAgainCount] = useState<number>(0);
   useEffect(() => {
     const handleProgressUpdate = (progress: number, message: string): void => {
       setProgress(progress);
@@ -115,21 +119,41 @@ function LoaderUtil(): JSX.Element {
                 >
                   {restartUpdate}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ fontSize: '1rem', fontWeight: 'bold', color: 'red', marginBottom: '2rem' }}
-                >
-                  Support has been notified.
-                </Typography>
+                {tryAgainCount <= 2 && (
+                  <>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold',
+                        color: 'red',
+                        marginBottom: '2rem'
+                      }}
+                    >
+                      Support has been notified.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        restartApp();
+                      }}
+                    >
+                      Try Again
+                    </Button>
+                  </>
+                )}
 
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    restartApp();
-                  }}
-                >
-                  Try Again
-                </Button>
+                {tryAgainCount > 2 && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '2rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Contact support immediately
+                  </Typography>
+                )}
               </Box>
             </>
           )}
