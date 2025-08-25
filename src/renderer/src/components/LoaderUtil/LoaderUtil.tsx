@@ -63,7 +63,7 @@ function LoaderUtil(): JSX.Element {
                   width: '100%'
                 }}
               >
-                <Box width="100%">
+                <Box width="100%" display="flex" flexDirection="row" alignItems="center">
                   <LinearProgress
                     variant="determinate"
                     value={progress}
