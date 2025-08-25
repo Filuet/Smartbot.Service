@@ -2,7 +2,7 @@ import { Button, Dialog, LinearProgress, Typography, useTheme } from '@mui/mater
 import { JSX, useEffect, useState } from 'react';
 import HerbalifeLogo from '../../assets/HerbalifeFullLogo.png';
 import { Box } from '@mui/system';
-import { RESTART_STATUS } from 'src/shared/restartStatus';
+import { RESTART_STATUS } from '../../../../shared/restartStatus';
 
 function LoaderUtil(): JSX.Element {
   const [progress, setProgress] = useState<number>(0);
