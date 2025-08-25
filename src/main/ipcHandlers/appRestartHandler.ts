@@ -115,14 +115,14 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           );
         } catch (error) {
           logger.error(`Failed to launch process ${config.name}:`, error);
-          sendProgressUpdate(-1, RESTART_STATUS.FailedToLaunch + `${config.name}`);
+          sendProgressUpdate(-1, RESTART_STATUS.FailedToLaunch);
           return;
         }
       }
 
       sendProgressUpdate(95, RESTART_STATUS.WebsiteToLoad);
       let isWebsiteLoaded = false;
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      await new Promise((resolve) => setTimeout(resolve, 8000));
       for (let attempt = 0; attempt < 6; attempt++) {
         isWebsiteLoaded = await IsWebsiteLoaded();
         if (isWebsiteLoaded) {

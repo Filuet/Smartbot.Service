@@ -4,7 +4,7 @@ export const enum RESTART_STATUS {
   WebsiteDidNotLoad = 'Website did not load after restart',
   RestartSuccessful = 'Application restarted successfully',
   RestartFailed = 'Restart failed',
-  FailedToLaunch = 'Failed to launch',
+  FailedToLaunch = 'Failed to launch a process',
   RestartStarted = 'Preparing to restart...',
   ProcessesKilled = 'Processes killed',
   ProcessLaunched = 'Process launched'
