@@ -106,13 +106,18 @@ function LoaderUtil(): JSX.Element {
               >
                 <Typography
                   variant="body1"
-                  sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red', marginBottom: '2rem' }}
+                  sx={{
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    color: 'red',
+                    marginBottom: '0.5rem'
+                  }}
                 >
                   {restartUpdate}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red', marginBottom: '2rem' }}
+                  sx={{ fontSize: '1rem', fontWeight: 'bold', color: 'red', marginBottom: '2rem' }}
                 >
                   Support has been notified.
                 </Typography>
