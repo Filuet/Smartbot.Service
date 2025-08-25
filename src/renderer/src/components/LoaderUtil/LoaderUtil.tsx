@@ -57,7 +57,7 @@ function LoaderUtil(): JSX.Element {
             marginTop: '5rem'
           }}
         >
-          {progress >= 0 && (
+          {progress >= 0 && tryAgainCount <= 2 && (
             <>
               <Box
                 sx={{
@@ -108,19 +108,19 @@ function LoaderUtil(): JSX.Element {
                   width: '100%'
                 }}
               >
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: 'red',
-                    marginBottom: '0.5rem'
-                  }}
-                >
-                  {restartUpdate}
-                </Typography>
                 {tryAgainCount <= 2 && (
                   <>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontSize: '2rem',
+                        fontWeight: 'bold',
+                        color: 'red',
+                        marginBottom: '0.5rem'
+                      }}
+                    >
+                      Restart attempt unsuccessful.
+                    </Typography>
                     <Typography
                       variant="body2"
                       sx={{
@@ -131,6 +131,17 @@ function LoaderUtil(): JSX.Element {
                       }}
                     >
                       Support has been notified.
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold',
+                        color: 'red',
+                        marginBottom: '2rem'
+                      }}
+                    >
+                      You can tru again.
                     </Typography>
                     <Button
                       variant="contained"
@@ -147,8 +158,7 @@ function LoaderUtil(): JSX.Element {
                   <Typography
                     variant="body2"
                     sx={{
-                      fontSize: '2rem',
-                      fontWeight: 'bold'
+                      fontSize: '2rem'
                     }}
                   >
                     Contact support immediately
