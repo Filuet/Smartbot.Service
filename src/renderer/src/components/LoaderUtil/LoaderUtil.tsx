@@ -78,12 +78,14 @@ function LoaderUtil(): JSX.Element {
           )}
           {progress === -1 && (
             <>
-              <Typography
-                variant="body1"
-                sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red' }}
-              >
-                {restartUpdate}
-              </Typography>
+              <Box>
+                <Typography
+                  variant="body1"
+                  sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red' }}
+                >
+                  {restartUpdate}
+                </Typography>
+              </Box>
               <Button
                 variant="contained"
                 onClick={() => {
