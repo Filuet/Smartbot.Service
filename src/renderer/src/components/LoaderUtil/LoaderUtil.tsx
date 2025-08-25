@@ -121,28 +121,7 @@ function LoaderUtil(): JSX.Element {
                     >
                       Restart attempt unsuccessful.
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontSize: '1.5rem',
-                        fontWeight: 'bold',
-                        color: 'red',
-                        marginBottom: '0.5rem'
-                      }}
-                    >
-                      Support has been notified.
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontSize: '1.5rem',
-                        fontWeight: 'bold',
-                        color: 'red',
-                        marginBottom: '2rem'
-                      }}
-                    >
-                      You can try again.
-                    </Typography>
+
                     <Button
                       variant="contained"
                       onClick={() => {
