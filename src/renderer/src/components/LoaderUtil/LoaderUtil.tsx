@@ -110,6 +110,13 @@ function LoaderUtil(): JSX.Element {
                 >
                   {restartUpdate}
                 </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red', marginBottom: '2rem' }}
+                >
+                  Support has been notified.
+                </Typography>
+
                 <Button
                   variant="contained"
                   onClick={() => {
