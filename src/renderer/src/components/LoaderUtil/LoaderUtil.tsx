@@ -63,7 +63,7 @@ function LoaderUtil(): JSX.Element {
                   width: '100%'
                 }}
               >
-                <Box width="100%" display="flex" flexDirection="row" alignItems="center">
+                <Box width="100%" display="flex" flexDirection="row" alignItems="center" gap={2}>
                   <LinearProgress
                     variant="determinate"
                     value={progress}
@@ -87,7 +87,10 @@ function LoaderUtil(): JSX.Element {
 
                 {(restartUpdate.includes(RESTART_STATUS.Retrying) ||
                   restartUpdate.includes(RESTART_STATUS.WebsiteToLoad)) && (
-                  <Typography variant="body2" sx={{ fontSize: '1rem', color: 'red' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: '1rem', color: 'red', marginTop: '2rem' }}
+                  >
                     {restartUpdate}
                   </Typography>
                 )}
