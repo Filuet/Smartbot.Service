@@ -55,8 +55,8 @@ function LoaderUtil(): JSX.Element {
         >
           {progress >= 0 && (
             <>
-              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                <Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Box width="100%">
                   <LinearProgress
                     variant="determinate"
                     value={progress}
@@ -89,7 +89,7 @@ function LoaderUtil(): JSX.Element {
           )}
           {progress === -1 && (
             <>
-              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Typography
                   variant="body1"
                   sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red' }}
