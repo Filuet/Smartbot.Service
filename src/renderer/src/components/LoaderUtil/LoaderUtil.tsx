@@ -1,15 +1,20 @@
-import { Dialog, LinearProgress, Typography, useTheme } from '@mui/material';
+import { Button, Dialog, LinearProgress, Typography, useTheme } from '@mui/material';
 import { JSX, useEffect, useState } from 'react';
 import HerbalifeLogo from '../../assets/HerbalifeFullLogo.png';
 import { Box } from '@mui/system';
+import { RESTART_STATUS } from 'src/shared/restartStatus';
 
 function LoaderUtil(): JSX.Element {
   const [progress, setProgress] = useState<number>(0);
   const theme = useTheme();
+  const [restartUpdate, setRestartUpdate] = useState<string>('');
+  const restartApp = async (): Promise<void> => {
+    await window.electron.restartAppUtils.restartApp();
+  };
   useEffect(() => {
     const handleProgressUpdate = (progress: number, message: string): void => {
       setProgress(progress);
-      console.log(`Progress: ${progress}, Message: ${message}`);
+      setRestartUpdate(message);
     };
 
     window.electron.restartAppUtils.onProgressUpdate(handleProgressUpdate);
@@ -48,26 +53,56 @@ function LoaderUtil(): JSX.Element {
             marginTop: '5rem'
           }}
         >
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              '&.MuiLinearProgress-root': {
-                width: '80%',
-                height: '1.5rem',
-                borderRadius: '0.5rem',
-                color: theme.palette.primary.main
-              },
-              '& .MuiLinearProgress-bar': {
-                borderRadius: '0.18rem'
-              }
-            }}
-          />
-
-          <Typography
-            variant="body2"
-            sx={{ fontSize: '1.1rem' }}
-          >{`${Math.round(progress)}%`}</Typography>
+          {progress >= 0 && (
+            <>
+              <LinearProgress
+                variant="determinate"
+                value={progress}
+                sx={{
+                  '&.MuiLinearProgress-root': {
+                    width: '80%',
+                    height: '1.5rem',
+                    borderRadius: '0.5rem',
+                    color: theme.palette.primary.main
+                  },
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: '0.18rem'
+                  }
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ fontSize: '1.1rem' }}
+              >{`${Math.round(progress)}%`}</Typography>
+            </>
+          )}
+          {progress === -1 && (
+            <>
+              <Typography
+                variant="body1"
+                sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'red' }}
+              >
+                {restartUpdate}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  restartApp();
+                }}
+              >
+                Try Again
+              </Button>
+            </>
+          )}
+          {(restartUpdate.includes(RESTART_STATUS.Retrying) ||
+            restartUpdate.includes(RESTART_STATUS.WebsiteToLoad)) && (
+            <Typography
+              variant="body2"
+              sx={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'red' }}
+            >
+              {restartUpdate}
+            </Typography>
+          )}
         </Box>
       </Box>
     </Dialog>

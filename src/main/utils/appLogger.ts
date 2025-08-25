@@ -2,6 +2,7 @@ import { desktopCapturer, screen } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import readline from 'readline';
+import { logger } from './logger';
 
 const BASE_FILUET_PATH = 'C:\\Filuet\\logs';
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -33,7 +34,7 @@ export class AppLogger {
         }
       }
     } catch (error) {
-      console.error('Screenshot capture failed:', error);
+      logger.error('Screenshot capture failed:', error);
     }
     return null;
   }
@@ -49,13 +50,13 @@ export class AppLogger {
 
     try {
       if (!fs.existsSync(logDir)) {
-        console.error(`Directory not found: ${logDir}`);
+        logger.error(`Directory not found: ${logDir}`);
         return null;
       }
 
       const files = fs.readdirSync(logDir);
       if (files.length === 0) {
-        console.error(`No files in directory: ${logDir}`);
+        logger.error(`No files in directory: ${logDir}`);
         return null;
       }
 
@@ -64,7 +65,7 @@ export class AppLogger {
       const filteredFiles = files.filter((file) => pattern.test(file));
 
       if (filteredFiles.length === 0) {
-        console.error(`No files matched pattern in: ${logDir}`);
+        logger.error(`No files matched pattern in: ${logDir}`);
         return null;
       }
 
@@ -80,7 +81,7 @@ export class AppLogger {
 
       return path.join(logDir, sortedFiles[0]);
     } catch (error) {
-      console.error(`Error finding ${prefix} logs:`, error);
+      logger.error(`Error finding ${prefix} logs:`, error);
       return null;
     }
   }
@@ -126,10 +127,10 @@ export class AppLogger {
           recentLogs.push(line);
         }
       }
-      console.log(`Found ${recentLogs.length} recent pos logs`);
+      logger.log(`Found ${recentLogs.length} recent pos logs`);
       return recentLogs;
     } catch (error) {
-      console.error('Error reading POS logs:', error);
+      logger.error('Error reading POS logs:', error);
       return ['[POS] Error reading log file'];
     }
   }
@@ -162,10 +163,10 @@ export class AppLogger {
           recentLogs.push(line);
         }
       }
-      console.log(`Found ${recentLogs.length} recent UI logs`);
+      logger.log(`Found ${recentLogs.length} recent UI logs`);
       return recentLogs;
     } catch (error) {
-      console.error('Error reading UI logs:', error);
+      logger.error('Error reading UI logs:', error);
       return ['[UI] Error reading log file'];
     }
   }
@@ -208,7 +209,7 @@ export class AppLogger {
 
       return [posFilePath, uiFilePath];
     } catch (error) {
-      console.error('Failed to create diagnostic log:', error);
+      logger.error('Failed to create diagnostic log:', error);
       return null;
     }
   }

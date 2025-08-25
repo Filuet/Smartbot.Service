@@ -5,6 +5,7 @@ import { AppLogger } from '../utils/appLogger';
 import { emailService } from '../utils/emailService';
 import axios from 'axios';
 import { logger } from '../utils/logger';
+import { RESTART_STATUS } from '../../shared/restartStatus';
 
 const appRestartHandler = (mainWindow: BrowserWindow): void => {
   const sendProgressUpdate = (progress: number, message: string): void => {
@@ -92,7 +93,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
       ]
     });
     logger.log('Application restart initiated');
-    sendProgressUpdate(10, 'Preparing to restart...');
+    sendProgressUpdate(10, RESTART_STATUS.RestartStarted);
     try {
       await Promise.all(
         processesToKill.map(async (processName) => {
@@ -100,7 +101,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           await processManager.killProcess(processName);
         })
       );
-      sendProgressUpdate(20, `processes killed`);
+      sendProgressUpdate(20, RESTART_STATUS.ProcessesKilled);
       let currentProgress = 20;
       const progressIncrement = 70 / processesToLaunch.length;
       for (const config of processesToLaunch) {
@@ -108,33 +109,52 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           logger.log(`Launching process: ${config.name}`);
           await processManager.launchProcess(config);
           currentProgress += progressIncrement;
-          sendProgressUpdate(Math.round(currentProgress), `${config.name} launched`);
+          sendProgressUpdate(
+            Math.round(currentProgress),
+            `${config.name}` + RESTART_STATUS.ProcessLaunched
+          );
         } catch (error) {
-          logger.error(`-3 Failed to launch process ${config.name}:`, error);
-          sendProgressUpdate(-3, `Failed to launch ${config.name}`);
+          logger.error(`Failed to launch process ${config.name}:`, error);
+          sendProgressUpdate(-1, RESTART_STATUS.FailedToLaunch + `${config.name}`);
           return;
         }
       }
 
-      sendProgressUpdate(95, `waiting for website to load`);
+      sendProgressUpdate(95, RESTART_STATUS.WebsiteToLoad);
       let isWebsiteLoaded = false;
-      await new Promise((resolve) => setTimeout(resolve, 15000));
-      isWebsiteLoaded = await IsWebsiteLoaded();
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+      for (let attempt = 0; attempt < 6; attempt++) {
+        isWebsiteLoaded = await IsWebsiteLoaded();
+        if (isWebsiteLoaded) {
+          break;
+        }
+        if (attempt < 5) {
+          sendProgressUpdate(95, RESTART_STATUS.Retrying + `attempt ${attempt + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+      }
 
       if (isWebsiteLoaded) {
-        sendProgressUpdate(100, 'Application restarted successfully');
+        sendProgressUpdate(100, RESTART_STATUS.RestartSuccessful);
+        setRestart(false);
         logger.log('Application restarted successfully');
       } else {
-        sendProgressUpdate(-2, 'Website did not load after restart');
-        logger.error('-2 Website did not load after restart');
+        sendProgressUpdate(-1, RESTART_STATUS.WebsiteDidNotLoad);
+        await emailService.sendEmail({
+          to: 'minal.kose@filuet.com;shashank.sood@filuet.com;ankit.s@filuet.com',
+          subject: `${kioskName}: Website Did Not Load After Restart`,
+          text: 'The application did not restart successfully. Please check the kiosk.'
+        });
+        logger.error('Website did not load after restart, sending email alert');
       }
     } catch (error: Error | unknown) {
-      sendProgressUpdate(-1, `Restart failed: ${error}`);
-      logger.error(`-1 Error during application restart:${error}`);
-    } finally {
-      setTimeout(() => {
-        setRestart(false);
-      }, 6000);
+      sendProgressUpdate(-1, RESTART_STATUS.RestartFailed);
+      await emailService.sendEmail({
+        to: 'minal.kose@filuet.com;shashank.sood@filuet.com;ankit.s@filuet.com',
+        subject: `${kioskName}: Application Did Not Restart`,
+        text: `The application did not restart successfully. Please check the kiosk. Error details: ${error} `
+      });
+      logger.error(`Error during application restart:${error}`);
     }
   });
 };
