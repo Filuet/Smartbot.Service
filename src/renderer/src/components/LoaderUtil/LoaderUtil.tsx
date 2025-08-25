@@ -69,7 +69,7 @@ function LoaderUtil(): JSX.Element {
                     value={progress}
                     sx={{
                       '&.MuiLinearProgress-root': {
-                        width: '80%',
+                        width: '90%',
                         height: '1.5rem',
                         borderRadius: '0.5rem',
                         color: theme.palette.primary.main
