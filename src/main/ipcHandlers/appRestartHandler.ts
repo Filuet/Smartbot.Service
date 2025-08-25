@@ -115,7 +115,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           );
         } catch (error) {
           logger.error(`Failed to launch process ${config.name}:`, error);
-          sendProgressUpdate(-1, RESTART_STATUS.FailedToLaunch);
+          sendProgressUpdate(-1, RESTART_STATUS.RestartFailed);
           return;
         }
       }
@@ -129,7 +129,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
           break;
         }
         if (attempt < 5) {
-          sendProgressUpdate(95, RESTART_STATUS.Retrying + `attempt ${attempt + 1}`);
+          sendProgressUpdate(95, RESTART_STATUS.Retrying + ` ${attempt + 1}`);
           await new Promise((resolve) => setTimeout(resolve, 5000));
         }
       }

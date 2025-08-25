@@ -87,10 +87,7 @@ function LoaderUtil(): JSX.Element {
 
                 {(restartUpdate.includes(RESTART_STATUS.Retrying) ||
                   restartUpdate.includes(RESTART_STATUS.WebsiteToLoad)) && (
-                  <Typography
-                    variant="body2"
-                    sx={{ fontSize: '1rem', color: 'red', marginTop: '2rem' }}
-                  >
+                  <Typography variant="body2" sx={{ fontSize: '1rem', marginTop: '2rem' }}>
                     {restartUpdate}
                   </Typography>
                 )}
