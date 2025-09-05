@@ -8,5 +8,9 @@ export interface ElectronBridgeAPI extends ElectronAPI {
   };
   restartAppUtils: {
     restartApp: () => Promise<void>;
+    onProgressUpdate: (callback: (progress: number, message: string) => void) => void;
+    onRestartDone: (callback: (isRestarted: boolean) => void) => void;
+    removeRestartListeners: () => void;
+    removeProgressListeners: () => void;
   };
 }

@@ -5,6 +5,7 @@ import botLogo from './assets/herbalife.png';
 import { appStyles } from './components/appStyles';
 import { Button, Dialog, DialogActions, DialogContent, Typography, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
+import LoaderUtil from './components/LoaderUtil/LoaderUtil';
 
 function App(): React.JSX.Element {
   const theme = useTheme();
@@ -14,15 +15,28 @@ function App(): React.JSX.Element {
   const isDraggingRef = useRef(false);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
-
+  const [restart, setRestart] = useState<boolean>(false);
   const toggleMenu = (e: React.MouseEvent | React.TouchEvent): void => {
     e.stopPropagation();
     setShowMenuDialog(!showMenuDialog);
   };
+  useEffect(() => {
+    const updateRestartState = (isRestarted: boolean): void => {
+      setRestart(isRestarted);
+      if (isRestarted) {
+        window.electron.windowMoveResize.setWindowSize(768, 1366, 0, 0);
+      }
+      console.log(`Restart state: ${restart}`);
+      console.log(`showMenuDialog: ${showMenuDialog}`);
+    };
+    window.electron.restartAppUtils.onRestartDone(updateRestartState);
+    return () => {
+      window.electron.restartAppUtils.removeRestartListeners();
+    };
+  }, []);
 
   const restartApp = async (): Promise<void> => {
     await window.electron.restartAppUtils.restartApp();
-    setShowMenuDialog(false);
   };
 
   const handleMouseDown = (e: React.MouseEvent): void => {
@@ -109,15 +123,20 @@ function App(): React.JSX.Element {
     document.addEventListener('touchend', cleanup, { once: true });
   };
   useEffect(() => {
-    if (showMenuDialog) {
+    console.log(`Restart state: ${restart}`);
+    console.log(`showMenuDialog: ${showMenuDialog}`);
+    if (showMenuDialog && !restart) {
+      console.log('Setting window size to 692x429 at position 300,300');
       window.electron.windowMoveResize.setWindowSize(692, 429, 300, 300);
-    } else {
+    } else if (!showMenuDialog && !restart) {
+      console.log('Setting window size to 50x50');
       window.electron.windowMoveResize.setWindowSize(50, 50);
     }
-  }, [showMenuDialog]);
+  }, [showMenuDialog, restart]);
   return (
     <>
-      {!showMenuDialog && (
+      {restart && !showMenuDialog && <LoaderUtil />}
+      {!showMenuDialog && !restart && (
         <div
           ref={iconRef}
           style={styles.imageDivContainer}
@@ -129,7 +148,6 @@ function App(): React.JSX.Element {
           <img src={botLogo} alt="Bot" style={styles.botImageStyles} />
         </div>
       )}
-
       <Dialog open={showMenuDialog} onClose={() => setShowMenuDialog(false)} fullScreen>
         <Box
           sx={{
@@ -191,8 +209,9 @@ function App(): React.JSX.Element {
           <Button
             variant="contained"
             onClick={() => {
-              restartApp();
               setShowMenuDialog(false);
+              // setRestart(true);
+              restartApp();
             }}
           >
             Restart

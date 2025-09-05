@@ -4,6 +4,6 @@ import appRestartHandler from './appRestartHandler';
 
 const registerAllIpcHandlers = (mainWindow: BrowserWindow): void => {
   windowMoveResizeIpc(mainWindow);
-  appRestartHandler();
+  appRestartHandler(mainWindow);
 };
 export default registerAllIpcHandlers;

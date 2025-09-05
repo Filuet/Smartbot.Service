@@ -44,17 +44,6 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-// ipcMain.on('restart-app', (_, appName: string) => {
-//   if (process.platform === 'win32') {
-//     exec(`taskkill /IM ${appName}.exe /F && start ${appName}`, (err) => {
-//       if (err) console.error('Failed to restart app:', err)
-//     })
-//   } else if (process.platform === 'darwin') {
-//     exec(`pkill -f ${appName} && open -a "${appName}"`, (err) => {
-//       if (err) console.error('Failed to restart app:', err)
-//     })
-//   }
-// })
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

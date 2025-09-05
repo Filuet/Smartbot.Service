@@ -3,6 +3,8 @@ import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
+import { logger } from './logger';
 
 const execAsync = promisify(exec);
 
@@ -13,56 +15,153 @@ export interface ProcessConfig {
   delay?: number; // Delay in ms before starting
   killOnExit?: boolean; // Whether to kill when app exits
 }
+
 export const getKioskName = async (): Promise<string | null> => {
   const files = await fs.readdir('C:\\Filuet\\Filuet.ASC.Kiosk');
   const keyFile = files.find((file) => file.endsWith('.key'));
 
   if (!keyFile) {
-    console.warn('No .key file found in directory');
+    logger.error('No .key file found in directory');
     return null;
   }
 
   return path.basename(keyFile, '.key');
 };
+
+// Helper function to find Chrome executable
+const getChromeExecutablePath = (): string => {
+  const possiblePaths = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Users\\' +
+      process.env.USERNAME +
+      '\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  ];
+
+  for (const chromePath of possiblePaths) {
+    if (existsSync(chromePath)) {
+      return chromePath;
+    }
+  }
+
+  // Fallback to chrome command (might work if it's in PATH)
+  return 'chrome';
+};
+
 class ProcessManager {
   private childProcesses: ChildProcess[] = [];
 
   async killProcess(processName: string): Promise<void> {
-    const { stdout } = await execAsync(
-      process.platform === 'win32'
-        ? `tasklist /FI "IMAGENAME eq ${processName}.exe"`
-        : `pgrep -f ${processName}`
-    );
-    const isProcessRunning = stdout.includes(processName);
-    if (isProcessRunning) {
+    try {
       if (process.platform === 'win32') {
-        await execAsync(`taskkill /IM ${processName}.exe /F`);
-      } else if (process.platform === 'darwin') {
-        await execAsync(`pkill -f ${processName}`);
+        // Use tasklist without filters to avoid the "Invalid class" error
+        const { stdout } = await execAsync('tasklist');
+        const isProcessRunning = stdout.includes(`${processName}.exe`);
+
+        if (isProcessRunning) {
+          await execAsync(`taskkill /IM "${processName}.exe" /F`);
+          logger.log(`Successfully killed process: ${processName}.exe`);
+        } else {
+          logger.log(`Process ${processName}.exe is not running`);
+        }
       } else {
-        // Linux
-        await execAsync(`pkill ${processName}`);
+        // Unix-like systems
+        const { stdout } = await execAsync(`pgrep -f ${processName}`);
+        if (stdout.trim().length > 0) {
+          if (process.platform === 'darwin') {
+            await execAsync(`pkill -f ${processName}`);
+          } else {
+            await execAsync(`pkill ${processName}`);
+          }
+          logger.log(`Successfully killed process: ${processName}`);
+        } else {
+          logger.log(`Process ${processName} is not running`);
+        }
+      }
+    } catch (error) {
+      logger.error(`Error managing process ${processName}:`, error);
+      // Try direct kill without checking if process exists
+      try {
+        if (process.platform === 'win32') {
+          await execAsync(`taskkill /IM "${processName}.exe" /F`);
+          logger.log(`Force killed process: ${processName}.exe (alternative method)`);
+        }
+      } catch (error: unknown) {
+        logger.error(
+          `Process ${processName}.exe was not running or could not be killed`,
+          error instanceof Error ? error.message : error
+        );
       }
     }
   }
 
   async launchProcess(config: ProcessConfig): Promise<ChildProcess> {
-    // Kill existing instances first
-    await this.killProcess(config.name);
-
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const start = (): void => {
-        const child = spawn(config.command, config.args || [], {
+        // Fix Chrome command path
+        let command = config.command;
+        if (config.command === 'chrome') {
+          command = getChromeExecutablePath();
+          logger.log(`Using Chrome path: ${command}`);
+        }
+
+        logger.log(`Starting process: ${command} with args: ${config.args}`);
+
+        // For paths with spaces, we need to quote them properly or not use shell
+        const child = spawn(command, config.args || [], {
           detached: true,
-          stdio: 'ignore',
-          shell: true
+          stdio: ['ignore', 'pipe', 'pipe'],
+          shell: false, // Don't use shell to avoid path parsing issues
+          windowsHide: false
+        });
+
+        let hasResolved = false;
+
+        child.stdout?.on('data', (data) => {
+          logger.log(`${command} stdout:`, data.toString());
+        });
+
+        child.stderr?.on('data', (data) => {
+          logger.error(`${command} stderr:`, data.toString());
+        });
+
+        child.on('error', (error) => {
+          logger.error(`Failed to start ${command}:`, error);
+          if (!hasResolved) {
+            hasResolved = true;
+            reject(error);
+          }
+        });
+
+        child.on('spawn', () => {
+          logger.log(`Successfully spawned: ${command} with PID: ${child.pid}`);
+          if (!hasResolved) {
+            hasResolved = true;
+            resolve(child);
+          }
+        });
+
+        child.on('exit', (code, signal) => {
+          logger.log(`Process ${command} exited with code: ${code}, signal: ${signal}`);
+        });
+
+        child.on('close', (code, signal) => {
+          logger.log(`Process ${command} closed with code: ${code}, signal: ${signal}`);
         });
 
         if (config.killOnExit) {
           this.childProcesses.push(child);
         }
 
-        resolve(child);
+        // Resolve after a short delay if spawn event doesn't fire
+        setTimeout(() => {
+          if (!hasResolved) {
+            hasResolved = true;
+            logger.log(`Resolving ${command} after timeout`);
+            resolve(child);
+          }
+        }, 2000);
       };
 
       if (config.delay) {
@@ -85,7 +184,7 @@ class ProcessManager {
           }
         }
       } catch (err) {
-        console.error('Error killing process:', err);
+        logger.error('Error killing process:', err);
       }
     });
   }

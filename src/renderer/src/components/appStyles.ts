@@ -13,7 +13,7 @@ export const appStyles = (): {
     cursor: 'pointer',
     userSelect: 'none',
     transition: 'transform 0.2s',
-    zIndex: 9999999,
+    zIndex: '9999999',
     position: 'relative',
     display: 'flex',
     alignContent: 'center',

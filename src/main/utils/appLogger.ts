@@ -2,6 +2,7 @@ import { desktopCapturer, screen } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import readline from 'readline';
+import { logger } from './logger';
 
 const BASE_FILUET_PATH = 'C:\\Filuet\\logs';
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -33,7 +34,7 @@ export class AppLogger {
         }
       }
     } catch (error) {
-      console.error('Screenshot capture failed:', error);
+      logger.error('Screenshot capture failed:', error);
     }
     return null;
   }
@@ -49,13 +50,13 @@ export class AppLogger {
 
     try {
       if (!fs.existsSync(logDir)) {
-        console.error(`Directory not found: ${logDir}`);
+        logger.error(`Directory not found: ${logDir}`);
         return null;
       }
 
       const files = fs.readdirSync(logDir);
       if (files.length === 0) {
-        console.error(`No files in directory: ${logDir}`);
+        logger.error(`No files in directory: ${logDir}`);
         return null;
       }
 
@@ -64,7 +65,7 @@ export class AppLogger {
       const filteredFiles = files.filter((file) => pattern.test(file));
 
       if (filteredFiles.length === 0) {
-        console.error(`No files matched pattern in: ${logDir}`);
+        logger.error(`No files matched pattern in: ${logDir}`);
         return null;
       }
 
@@ -80,7 +81,7 @@ export class AppLogger {
 
       return path.join(logDir, sortedFiles[0]);
     } catch (error) {
-      console.error(`Error finding ${prefix} logs:`, error);
+      logger.error(`Error finding ${prefix} logs:`, error);
       return null;
     }
   }
@@ -126,10 +127,10 @@ export class AppLogger {
           recentLogs.push(line);
         }
       }
-      console.log(`Found ${recentLogs.length} recent pos logs`);
+      logger.log(`Found ${recentLogs.length} recent pos logs`);
       return recentLogs;
     } catch (error) {
-      console.error('Error reading POS logs:', error);
+      logger.error('Error reading POS logs:', error);
       return ['[POS] Error reading log file'];
     }
   }
@@ -162,20 +163,20 @@ export class AppLogger {
           recentLogs.push(line);
         }
       }
-      console.log(`Found ${recentLogs.length} recent UI logs`);
+      logger.log(`Found ${recentLogs.length} recent UI logs`);
       return recentLogs;
     } catch (error) {
-      console.error('Error reading UI logs:', error);
+      logger.error('Error reading UI logs:', error);
       return ['[UI] Error reading log file'];
     }
   }
 
-  static async saveDiagnosticLogs(): Promise<string | null> {
+  static async saveDiagnosticLogs(): Promise<string[] | null> {
     try {
       const logsPath = this.ensureLogsDirectory();
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const logFilePath = path.join(logsPath, `diagnostic-${timestamp}.log`);
-
+      const posFilePath = path.join(logsPath, `pos-${timestamp}.log`);
+      const uiFilePath = path.join(logsPath, `ui-${timestamp}.log`);
       // Find latest log files
       const posLogPath = this.findLatestLogFile(BASE_FILUET_PATH, 'pos');
       const uiLogPath = this.findLatestLogFile(BASE_FILUET_PATH, 'ui');
@@ -185,23 +186,30 @@ export class AppLogger {
         this.getRecentPosLogs(posLogPath, 5),
         this.getRecentUiLogs(uiLogPath, 5)
       ]);
-
-      // Create combined log content
-      const combinedLogs = [
-        `=== Diagnostic Log ${new Date().toISOString()} ===`,
+      const recentPosLogs = [
+        `=== Diagnostic POS Log ${new Date().toISOString()} ===`,
         `Source POS Log: ${posLogPath || 'Not found'}`,
-        `Source UI Log: ${uiLogPath || 'Not found'}`,
+
         `=== Last 5 Minutes of POS Logs ===`,
         ...posLogs,
-        ``,
-        `=== Last 5 Minutes of UI Logs ===`,
-        ...uiLogs
+        ``
       ];
+      const recentUILogs = [
+        `=== Diagnostic UI Log ${new Date().toISOString()} ===`,
+        `Source UI Log: ${uiLogPath || 'Not found'}`,
 
-      fs.writeFileSync(logFilePath, combinedLogs.join('\n'));
-      return logFilePath;
+        `=== Last 5 Minutes of UI Logs ===`,
+        ...uiLogs,
+        ``
+      ];
+      // Create combined log content
+
+      fs.writeFileSync(posFilePath, recentPosLogs.join('\n'));
+      fs.writeFileSync(uiFilePath, recentUILogs.join('\n'));
+
+      return [posFilePath, uiFilePath];
     } catch (error) {
-      console.error('Failed to create diagnostic log:', error);
+      logger.error('Failed to create diagnostic log:', error);
       return null;
     }
   }
