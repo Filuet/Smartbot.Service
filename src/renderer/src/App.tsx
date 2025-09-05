@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { RestartAlt, Close } from '@mui/icons-material';
 import InfoIcon from '@mui/icons-material/Info';
-import botLogo from './assets/herbalife.png';
+// import botLogo from './assets/herbalife.png';
+import restartLogo from './assets/restart.png';
 import { appStyles } from './components/appStyles';
 import { Button, Dialog, DialogActions, DialogContent, Typography, useTheme } from '@mui/material';
 import { Box } from '@mui/system';
@@ -145,7 +146,7 @@ function App(): React.JSX.Element {
           onClick={onIconClick}
           onTouchEnd={onTouchEnd}
         >
-          <img src={botLogo} alt="Bot" style={styles.botImageStyles} />
+          <img src={restartLogo} alt="Bot" style={styles.botImageStyles} />
         </div>
       )}
       <Dialog open={showMenuDialog} onClose={() => setShowMenuDialog(false)} fullScreen>
