@@ -74,7 +74,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     const kioskName = await getKioskName();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     await emailService.sendEmail({
-      to: 'minal.kose@filuet.com;shashank.sood@filuet.com;ankit.s@filuet.com',
+      to: 'minal.kose@filuet.com;shashank.sood@filuet.com;mugdha.deshmukh@filuet.com',
       subject: `${kioskName}: Application Restarted`,
       text: 'The application was restarted. Please find attached logs and screenshot.',
       attachments: [
