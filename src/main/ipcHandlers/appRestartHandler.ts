@@ -6,6 +6,7 @@ import { emailService } from '../utils/emailService';
 import axios from 'axios';
 import { logger } from '../utils/logger';
 import { RESTART_STATUS } from '../../shared/restartStatus';
+import { EMAIL_SERVICE_USER } from '../utils/constant';
 
 const appRestartHandler = (mainWindow: BrowserWindow): void => {
   const sendProgressUpdate = (progress: number, message: string): void => {
@@ -74,7 +75,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     const kioskName = await getKioskName();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     await emailService.sendEmail({
-      to: 'minal.kose@filuet.com;shashank.sood@filuet.com;mugdha.deshmukh@filuet.com',
+      to: EMAIL_SERVICE_USER,
       subject: `${kioskName}: Application Restarted`,
       text: 'The application was restarted. Please find attached logs and screenshot.',
       attachments: [
@@ -141,7 +142,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
       } else {
         sendProgressUpdate(-1, RESTART_STATUS.WebsiteDidNotLoad);
         await emailService.sendEmail({
-          to: 'minal.kose@filuet.com;shashank.sood@filuet.com;ankit.s@filuet.com',
+          to: EMAIL_SERVICE_USER,
           subject: `${kioskName}: Website Did Not Load After Restart`,
           text: 'The application did not restart successfully. Please check the kiosk.'
         });
@@ -150,7 +151,7 @@ const appRestartHandler = (mainWindow: BrowserWindow): void => {
     } catch (error: Error | unknown) {
       sendProgressUpdate(-1, RESTART_STATUS.RestartFailed);
       await emailService.sendEmail({
-        to: 'minal.kose@filuet.com;shashank.sood@filuet.com;ankit.s@filuet.com',
+        to: EMAIL_SERVICE_USER,
         subject: `${kioskName}: Application Did Not Restart`,
         text: `The application did not restart successfully. Please check the kiosk. Error details: ${error} `
       });
