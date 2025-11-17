@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { RestartAlt, Close } from '@mui/icons-material';
 import InfoIcon from '@mui/icons-material/Info';
-// import botLogo from './assets/herbalife.png';
 import restartLogo from './assets/restart.png';
 import { appStyles } from './components/appStyles';
 import { Button, Dialog, DialogActions, DialogContent, Typography, useTheme } from '@mui/material';
@@ -41,6 +40,11 @@ function App(): React.JSX.Element {
   };
 
   const handleMouseDown = (e: React.MouseEvent): void => {
+    // Only allow drag when menu is closed and not restarting
+    if (showMenuDialog || restart) {
+      e.preventDefault();
+      return;
+    }
     dragStartPosition.current = { x: e.screenX, y: e.screenY };
     isDraggingRef.current = false;
     startDrag(e.screenX, e.screenY);
@@ -48,14 +52,14 @@ function App(): React.JSX.Element {
   };
 
   const onTouchStart = (e: React.TouchEvent): void => {
+    if (showMenuDialog || restart) {
+      e.preventDefault();
+      return;
+    }
+
     const touch = e.touches[0];
     dragStartPosition.current = { x: touch.screenX, y: touch.screenY };
     isDraggingRef.current = false;
-
-    // Set a timer to distinguish between tap and drag
-    touchTimerRef.current = setTimeout(() => {
-      isDraggingRef.current = true;
-    }, 100);
 
     startDrag(touch.screenX, touch.screenY);
     e.preventDefault();
@@ -70,11 +74,6 @@ function App(): React.JSX.Element {
   };
 
   const onTouchEnd = (e: React.TouchEvent): void => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
-    }
-
     if (!isDraggingRef.current) {
       toggleMenu(e);
     }
@@ -82,16 +81,30 @@ function App(): React.JSX.Element {
   };
 
   const startDrag = async (startX: number, startY: number): Promise<void> => {
+    // Early exit if menu or restart is active
+    if (showMenuDialog || restart) {
+      return;
+    }
+
     const startPos = await window.electron.windowMoveResize.getPosition();
 
     const moveHandler = (e: MouseEvent | TouchEvent): void => {
+      if (showMenuDialog || restart) {
+        cleanup();
+        return;
+      }
+
       let clientX: number, clientY: number;
+
       if (e instanceof MouseEvent) {
         clientX = e.screenX;
         clientY = e.screenY;
       } else {
         clientX = e.touches[0].screenX;
         clientY = e.touches[0].screenY;
+
+        // THIS IS CRITICAL FOR SMOOTH DRAGGING
+        e.preventDefault();
       }
 
       const dx = Math.abs(clientX - dragStartPosition.current.x);
@@ -100,10 +113,12 @@ function App(): React.JSX.Element {
         isDraggingRef.current = true;
       }
 
-      window.electron.windowMoveResize.moveWindow(
-        startPos[0] + (clientX - startX),
-        startPos[1] + (clientY - startY)
-      );
+      if (isDraggingRef.current) {
+        window.electron.windowMoveResize.moveWindow(
+          startPos[0] + (clientX - startX),
+          startPos[1] + (clientY - startY)
+        );
+      }
     };
 
     const cleanup = (): void => {
