@@ -19,7 +19,8 @@ export const mainWindowObject = (): BrowserWindow => {
       contextIsolation: true, // Isolate context of renderer
       nodeIntegration: false // Enable Node.js in renderer
     },
-    minimizable: false
+    minimizable: false,
+    enableLargerThanScreen: true // Allow window to be larger than screen for kiosk mode
   });
 
   mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
