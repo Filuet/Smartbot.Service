@@ -57,12 +57,12 @@ function App(): React.JSX.Element {
       return;
     }
 
-    const touch = e.touches[0];
-    dragStartPosition.current = { x: touch.screenX, y: touch.screenY };
-    isDraggingRef.current = false;
+    // const touch = e.touches[0];
+    // dragStartPosition.current = { x: touch.screenX, y: touch.screenY };
+    // isDraggingRef.current = false;
 
-    startDrag(touch.screenX, touch.screenY);
-    e.preventDefault();
+    // startDrag(touch.screenX, touch.screenY);
+    // e.preventDefault();
   };
 
   const onIconClick = (e: React.MouseEvent): void => {
