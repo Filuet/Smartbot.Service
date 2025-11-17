@@ -13,12 +13,21 @@ function App(): React.JSX.Element {
   const iconRef = useRef<HTMLDivElement>(null);
   const dragStartPosition = useRef({ x: 0, y: 0 });
   const isDraggingRef = useRef(false);
-  const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const pointerIdRef = useRef<number | null>(null);
+  const startWindowPosRef = useRef<[number, number] | null>(null);
+  const startPointerRef = useRef({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
+  const pendingPointerRef = useRef<{ x: number; y: number } | null>(null);
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
   const [restart, setRestart] = useState<boolean>(false);
-  const toggleMenu = (e: React.MouseEvent | React.TouchEvent): void => {
-    e.stopPropagation();
-    setShowMenuDialog(!showMenuDialog);
+  const toggleMenu = (e?: Event | React.SyntheticEvent): void => {
+    try {
+      e?.stopPropagation?.();
+    } catch (err) {
+      void err;
+    }
+    setShowMenuDialog((s) => !s);
   };
   useEffect(() => {
     const updateRestartState = (isRestarted: boolean): void => {
@@ -26,8 +35,7 @@ function App(): React.JSX.Element {
       if (isRestarted) {
         window.electron.windowMoveResize.setWindowSize(768, 1366, 0, 0);
       }
-      console.log(`Restart state: ${restart}`);
-      console.log(`showMenuDialog: ${showMenuDialog}`);
+      console.log(`Restart state: ${isRestarted}`);
     };
     window.electron.restartAppUtils.onRestartDone(updateRestartState);
     return () => {
@@ -39,95 +47,96 @@ function App(): React.JSX.Element {
     await window.electron.restartAppUtils.restartApp();
   };
 
-  const handleMouseDown = (e: React.MouseEvent): void => {
-    dragStartPosition.current = { x: e.screenX, y: e.screenY };
-    isDraggingRef.current = false;
-    startDrag(e.screenX, e.screenY);
-    e.preventDefault();
-  };
-
-  const onTouchStart = (e: React.TouchEvent): void => {
-    const touch = e.touches[0];
-    dragStartPosition.current = { x: touch.screenX, y: touch.screenY };
-    isDraggingRef.current = false;
-
-    // Set a timer to distinguish between tap and drag
-    touchTimerRef.current = setTimeout(() => {
-      isDraggingRef.current = true;
-    }, 30);
-
-    startDrag(touch.screenX, touch.screenY);
-    e.preventDefault();
-  };
-
-  const onIconClick = (e: React.MouseEvent): void => {
-    if (isDraggingRef.current) {
+  // Pointer handlers (works for mouse, touch, pen)
+  const onPointerDown = async (e: React.PointerEvent): Promise<void> => {
+    console.log('onPointerDown', {
+      pointerId: e.pointerId,
+      screenX: e.screenX,
+      screenY: e.screenY
+    });
+    if (showMenuDialog || restart) {
       e.preventDefault();
       return;
     }
-    toggleMenu(e);
+
+    // Try to capture pointer on element
+    try {
+      (e.target as Element).setPointerCapture(e.pointerId);
+    } catch (err) {
+      void err;
+    }
+
+    pointerIdRef.current = e.pointerId;
+    startPointerRef.current = { x: e.screenX, y: e.screenY };
+    dragStartPosition.current = { x: e.screenX, y: e.screenY };
+    isDraggingRef.current = false;
+
+    // Get current window position only once
+    startWindowPosRef.current = await window.electron.windowMoveResize.getPosition();
+
+    document.addEventListener('pointermove', pointerMove as unknown as EventListener, {
+      passive: false
+    });
+    document.addEventListener('pointerup', pointerUp as unknown as EventListener, { once: true });
+    e.preventDefault();
   };
 
-  const onTouchEnd = (e: React.TouchEvent): void => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
+  const pointerMove = (e: PointerEvent): void => {
+    // debug
+    // console.log('pointerMove', { pointerId: e.pointerId, screenX: e.screenX, screenY: e.screenY });
+    if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+
+    const dx = Math.abs(e.screenX - dragStartPosition.current.x);
+    const dy = Math.abs(e.screenY - dragStartPosition.current.y);
+    if (dx > 6 || dy > 6) isDraggingRef.current = true;
+
+    if (!isDraggingRef.current) return;
+
+    pendingPointerRef.current = { x: e.screenX, y: e.screenY };
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(processPendingMove);
     }
 
-    if (!isDraggingRef.current) {
-      toggleMenu(e);
+    e.preventDefault();
+  };
+
+  const pointerUp = (e: PointerEvent): void => {
+    try {
+      (document.elementFromPoint(e.clientX, e.clientY) as Element)?.releasePointerCapture?.(
+        e.pointerId
+      );
+    } catch (err) {
+      void err;
     }
+
+    console.log('pointerUp', { pointerId: e.pointerId, isDragging: isDraggingRef.current });
+
+    if (!isDraggingRef.current) toggleMenu(e as Event);
+
+    document.removeEventListener('pointermove', pointerMove as unknown as EventListener);
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    pendingPointerRef.current = null;
+    pointerIdRef.current = null;
     isDraggingRef.current = false;
   };
 
-  const startDrag = async (startX: number, startY: number): Promise<void> => {
-    // Early exit if menu or restart is active
-    if (showMenuDialog || restart) {
-      return;
-    }
+  // Called on rAF to batch IPC calls
+  const processPendingMove = (): void => {
+    rafRef.current = null;
+    const pending = pendingPointerRef.current;
+    const startWindowPos = startWindowPosRef.current;
+    if (!pending || !startWindowPos) return;
 
-    const startPos = await window.electron.windowMoveResize.getPosition();
+    const deltaX = pending.x - startPointerRef.current.x;
+    const deltaY = pending.y - startPointerRef.current.y;
+    const targetX = startWindowPos[0] + deltaX;
+    const targetY = startWindowPos[1] + deltaY;
 
-    const moveHandler = (e: MouseEvent | TouchEvent): void => {
-      let clientX: number, clientY: number;
-      if (e instanceof MouseEvent) {
-        clientX = e.screenX;
-        clientY = e.screenY;
-      } else {
-        clientX = e.touches[0].screenX;
-        clientY = e.touches[0].screenY;
-
-        e.preventDefault();
-      }
-
-      const dx = Math.abs(clientX - dragStartPosition.current.x);
-      const dy = Math.abs(clientY - dragStartPosition.current.y);
-      if (dx > 5 || dy > 5) {
-        isDraggingRef.current = true;
-      }
-
-      window.electron.windowMoveResize.moveWindow(
-        startPos[0] + (clientX - startX),
-        startPos[1] + (clientY - startY)
-      );
-    };
-
-    const cleanup = (): void => {
-      document.removeEventListener('mousemove', moveHandler);
-      document.removeEventListener('touchmove', moveHandler);
-      document.removeEventListener('mouseup', cleanup);
-      document.removeEventListener('touchend', cleanup);
-
-      if (touchTimerRef.current) {
-        clearTimeout(touchTimerRef.current);
-        touchTimerRef.current = null;
-      }
-    };
-
-    document.addEventListener('mousemove', moveHandler);
-    document.addEventListener('touchmove', moveHandler, { passive: false });
-    document.addEventListener('mouseup', cleanup, { once: true });
-    document.addEventListener('touchend', cleanup, { once: true });
+    window.electron.windowMoveResize.moveWindow(targetX, targetY);
+    pendingPointerRef.current = null;
   };
   useEffect(() => {
     console.log(`Restart state: ${restart}`);
@@ -147,10 +156,9 @@ function App(): React.JSX.Element {
         <div
           ref={iconRef}
           style={styles.imageDivContainer}
-          onMouseDown={handleMouseDown}
-          onTouchStart={onTouchStart}
-          onClick={onIconClick}
-          onTouchEnd={onTouchEnd}
+          onPointerDown={onPointerDown}
+          role="button"
+          tabIndex={0}
         >
           <img src={restartLogo} alt="Bot" style={styles.botImageStyles} />
         </div>
