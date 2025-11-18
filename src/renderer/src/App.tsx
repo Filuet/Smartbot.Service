@@ -17,9 +17,6 @@ function App(): React.JSX.Element {
   const pointerIdRef = useRef<number | null>(null);
   const startWindowPosRef = useRef<[number, number] | null>(null);
   const startPointerRef = useRef({ x: 0, y: 0 });
-  const currentWindowPosRef = useRef<[number, number] | null>(null);
-  const lastMoveTimeRef = useRef<number>(0);
-  const lastValidPointerRef = useRef({ x: 0, y: 0 });
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
   const [restart, setRestart] = useState<boolean>(false);
 
@@ -52,14 +49,14 @@ function App(): React.JSX.Element {
 
   // Pointer handlers (works for mouse, touch, pen)
   const onPointerDown = async (e: React.PointerEvent): Promise<void> => {
-    console.log('onPointerDown', {
+    console.log('🔵 POINTER DOWN', {
       pointerId: e.pointerId,
-      pointerType: e.pointerType,
-      clientX: e.clientX,
-      clientY: e.clientY
+      type: e.pointerType,
+      position: { x: e.clientX, y: e.clientY }
     });
 
     if (showMenuDialog || restart) {
+      console.log('⚠️ Prevented - menu or restart active');
       e.preventDefault();
       return;
     }
@@ -76,74 +73,62 @@ function App(): React.JSX.Element {
     // Get current window position
     const windowPos = await window.electron.windowMoveResize.getPosition();
     startWindowPosRef.current = windowPos;
-    currentWindowPosRef.current = windowPos;
+
+    console.log('✅ Pointer captured - window start pos:', windowPos);
 
     e.preventDefault();
     e.stopPropagation();
   };
 
   const onPointerMove = (e: React.PointerEvent): void => {
+    // Early exit checks
     if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) {
+      if (pointerIdRef.current !== null) {
+        console.log('⚠️ MOVE IGNORED - wrong pointer ID', {
+          expected: pointerIdRef.current,
+          got: e.pointerId
+        });
+      }
       return;
     }
     if (showMenuDialog || restart) {
+      console.log('⚠️ MOVE IGNORED - menu/restart active');
       return;
     }
 
     const dx = Math.abs(e.clientX - dragStartPosition.current.x);
     const dy = Math.abs(e.clientY - dragStartPosition.current.y);
 
-    // Lower threshold for touch to make it more responsive
+    // Simple threshold check
     if (dx > 3 || dy > 3) {
       if (!isDraggingRef.current) {
-        console.log('✓ Drag threshold exceeded - starting drag');
+        console.log('🟢 DRAG STARTED - threshold exceeded', { dx, dy });
       }
       isDraggingRef.current = true;
     }
 
     if (!isDraggingRef.current) return;
 
-    // Ignore jittery touch inputs - if position jumped too far from last valid position
-    const jumpThreshold = 50; // pixels
-    const jumpX = Math.abs(e.clientX - lastValidPointerRef.current.x);
-    const jumpY = Math.abs(e.clientY - lastValidPointerRef.current.y);
-
-    if (lastValidPointerRef.current.x !== 0 && (jumpX > jumpThreshold || jumpY > jumpThreshold)) {
-      console.log('Ignoring jittery input', { jumpX, jumpY });
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-
-    // Throttle moves to prevent flooding
-    const now = Date.now();
-    if (now - lastMoveTimeRef.current < 16) {
-      // Skip this move, too soon (less than ~60fps)
-      return;
-    }
-    lastMoveTimeRef.current = now;
-
-    // Update last valid position
-    lastValidPointerRef.current = { x: e.clientX, y: e.clientY };
-
+    // Simple delta calculation from start position
     const deltaX = e.clientX - startPointerRef.current.x;
     const deltaY = e.clientY - startPointerRef.current.y;
 
-    if (!startWindowPosRef.current || !currentWindowPosRef.current) return;
+    if (!startWindowPosRef.current) {
+      console.error('❌ MOVE FAILED - no start window position');
+      return;
+    }
 
+    // Calculate target position directly from start position + delta
     const targetX = startWindowPosRef.current[0] + deltaX;
     const targetY = startWindowPosRef.current[1] + deltaY;
 
-    console.log('Moving', {
-      clientX: e.clientX,
-      clientY: e.clientY,
-      deltaX,
-      deltaY,
-      targetX,
-      targetY
+    console.log('🔄 MOVING', {
+      pointer: { x: e.clientX, y: e.clientY },
+      delta: { x: deltaX, y: deltaY },
+      target: { x: targetX, y: targetY }
     });
 
-    currentWindowPosRef.current = [targetX, targetY];
+    // Move window immediately - no throttling, no validation
     window.electron.windowMoveResize.moveWindow(targetX, targetY);
 
     e.preventDefault();
@@ -152,37 +137,37 @@ function App(): React.JSX.Element {
 
   const onPointerUp = (e: React.PointerEvent): void => {
     if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) {
+      console.log('⚠️ POINTER UP IGNORED - wrong pointer ID');
       return;
     }
+
+    console.log('🔴 POINTER UP', {
+      pointerId: e.pointerId,
+      type: e.pointerType,
+      wasDragging: isDraggingRef.current
+    });
 
     const target = e.currentTarget as Element;
     try {
       target.releasePointerCapture(e.pointerId);
-      console.log('✓ Released pointer capture');
+      console.log('✅ Pointer capture released');
     } catch (err) {
-      console.error('Failed to release pointer capture:', err);
+      console.error('❌ Failed to release pointer capture:', err);
     }
-
-    console.log('onPointerUp', {
-      pointerId: e.pointerId,
-      pointerType: e.pointerType,
-      isDragging: isDraggingRef.current
-    });
 
     const wasDragging = isDraggingRef.current;
 
-    // Clean up first
+    // Clean up
     pointerIdRef.current = null;
     isDraggingRef.current = false;
     startWindowPosRef.current = null;
-    currentWindowPosRef.current = null;
 
-    // Then handle click if not dragging
+    // Handle click if not dragging
     if (!wasDragging) {
-      console.log('Click detected - opening menu');
+      console.log('👆 CLICK detected - opening menu');
       toggleMenu(e as unknown as Event);
     } else {
-      console.log('Drag completed');
+      console.log('✅ DRAG completed');
     }
 
     e.preventDefault();
@@ -190,13 +175,12 @@ function App(): React.JSX.Element {
   };
 
   useEffect(() => {
-    console.log(`Restart state: ${restart}`);
-    console.log(`showMenuDialog: ${showMenuDialog}`);
+    console.log('📐 Window resize triggered', { showMenuDialog, restart });
     if (showMenuDialog && !restart) {
-      console.log('Setting window size to 692x429 at position 300,300');
+      console.log('→ Setting window to MENU size: 692x429');
       window.electron.windowMoveResize.setWindowSize(692, 429, 300, 300);
     } else if (!showMenuDialog && !restart) {
-      console.log('Setting window size to 50x50');
+      console.log('→ Setting window to ICON size: 50x50');
       window.electron.windowMoveResize.setWindowSize(50, 50);
     }
   }, [showMenuDialog, restart]);
