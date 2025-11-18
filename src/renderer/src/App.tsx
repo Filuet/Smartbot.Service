@@ -21,6 +21,7 @@ function App(): React.JSX.Element {
   const pendingPointerRef = useRef<{ x: number; y: number } | null>(null);
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
   const [restart, setRestart] = useState<boolean>(false);
+
   const toggleMenu = (e?: Event | React.SyntheticEvent): void => {
     try {
       e?.stopPropagation?.();
@@ -29,6 +30,7 @@ function App(): React.JSX.Element {
     }
     setShowMenuDialog((s) => !s);
   };
+
   useEffect(() => {
     const updateRestartState = (isRestarted: boolean): void => {
       setRestart(isRestarted);
@@ -51,20 +53,19 @@ function App(): React.JSX.Element {
   const onPointerDown = async (e: React.PointerEvent): Promise<void> => {
     console.log('onPointerDown', {
       pointerId: e.pointerId,
+      pointerType: e.pointerType,
       screenX: e.screenX,
       screenY: e.screenY
     });
+
     if (showMenuDialog || restart) {
       e.preventDefault();
       return;
     }
 
-    // Try to capture pointer on element
-    try {
-      (e.target as Element).setPointerCapture(e.pointerId);
-    } catch (err) {
-      void err;
-    }
+    // Capture pointer on the target element
+    const target = e.currentTarget as Element;
+    target.setPointerCapture(e.pointerId);
 
     pointerIdRef.current = e.pointerId;
     startPointerRef.current = { x: e.screenX, y: e.screenY };
@@ -74,53 +75,103 @@ function App(): React.JSX.Element {
     // Get current window position only once
     startWindowPosRef.current = await window.electron.windowMoveResize.getPosition();
 
-    document.addEventListener('pointermove', pointerMove as unknown as EventListener, {
-      passive: false
-    });
-    document.addEventListener('pointerup', pointerUp as unknown as EventListener, { once: true });
     e.preventDefault();
+    e.stopPropagation();
   };
 
-  const pointerMove = (e: PointerEvent): void => {
-    // debug
-    // console.log('pointerMove', { pointerId: e.pointerId, screenX: e.screenX, screenY: e.screenY });
-    if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+  const onPointerMove = (e: React.PointerEvent): void => {
+    if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) {
+      console.log('onPointerMove: Ignoring - pointer mismatch', {
+        currentId: pointerIdRef.current,
+        eventId: e.pointerId
+      });
+      return;
+    }
+    if (showMenuDialog || restart) {
+      console.log('onPointerMove: Ignoring - dialog/restart active', { showMenuDialog, restart });
+      return;
+    }
 
     const dx = Math.abs(e.screenX - dragStartPosition.current.x);
     const dy = Math.abs(e.screenY - dragStartPosition.current.y);
-    if (dx > 6 || dy > 6) isDraggingRef.current = true;
+
+    console.log('onPointerMove', {
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      screenX: e.screenX,
+      screenY: e.screenY,
+      dx,
+      dy,
+      isDragging: isDraggingRef.current
+    });
+
+    // Lower threshold for touch to make it more responsive
+    if (dx > 3 || dy > 3) {
+      if (!isDraggingRef.current) {
+        console.log('✓ Drag threshold exceeded - starting drag');
+      }
+      isDraggingRef.current = true;
+    }
 
     if (!isDraggingRef.current) return;
 
     pendingPointerRef.current = { x: e.screenX, y: e.screenY };
+
     if (rafRef.current === null) {
       rafRef.current = requestAnimationFrame(processPendingMove);
+      console.log('Scheduling processPendingMove via rAF');
     }
 
     e.preventDefault();
+    e.stopPropagation();
   };
 
-  const pointerUp = (e: PointerEvent): void => {
-    try {
-      (document.elementFromPoint(e.clientX, e.clientY) as Element)?.releasePointerCapture?.(
-        e.pointerId
-      );
-    } catch (err) {
-      void err;
+  const onPointerUp = (e: React.PointerEvent): void => {
+    if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) {
+      console.log('onPointerUp: Ignoring - pointer mismatch', {
+        currentId: pointerIdRef.current,
+        eventId: e.pointerId
+      });
+      return;
     }
 
-    console.log('pointerUp', { pointerId: e.pointerId, isDragging: isDraggingRef.current });
+    const target = e.currentTarget as Element;
+    try {
+      target.releasePointerCapture(e.pointerId);
+      console.log('✓ Released pointer capture');
+    } catch (err) {
+      console.error('Failed to release pointer capture:', err);
+    }
 
-    if (!isDraggingRef.current) toggleMenu(e as Event);
+    console.log('onPointerUp', {
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      isDragging: isDraggingRef.current,
+      screenX: e.screenX,
+      screenY: e.screenY
+    });
 
-    document.removeEventListener('pointermove', pointerMove as unknown as EventListener);
+    if (!isDraggingRef.current) {
+      console.log('Click detected - opening menu');
+      toggleMenu(e as unknown as Event);
+    } else {
+      console.log('Drag completed');
+    }
+
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
+      console.log('Cancelled pending rAF');
       rafRef.current = null;
     }
+
+    console.log('Cleaning up refs');
     pendingPointerRef.current = null;
     pointerIdRef.current = null;
     isDraggingRef.current = false;
+    startWindowPosRef.current = null;
+
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   // Called on rAF to batch IPC calls
@@ -128,16 +179,29 @@ function App(): React.JSX.Element {
     rafRef.current = null;
     const pending = pendingPointerRef.current;
     const startWindowPos = startWindowPosRef.current;
-    if (!pending || !startWindowPos) return;
+
+    if (!pending || !startWindowPos) {
+      console.warn('processPendingMove: Missing data', {
+        hasPending: !!pending,
+        hasStartPos: !!startWindowPos
+      });
+      return;
+    }
 
     const deltaX = pending.x - startPointerRef.current.x;
     const deltaY = pending.y - startPointerRef.current.y;
     const targetX = startWindowPos[0] + deltaX;
     const targetY = startWindowPos[1] + deltaY;
 
+    console.log('processPendingMove: Moving window', {
+      startPos: startWindowPos,
+      delta: { x: deltaX, y: deltaY },
+      target: { x: targetX, y: targetY }
+    });
+
     window.electron.windowMoveResize.moveWindow(targetX, targetY);
-    pendingPointerRef.current = null;
   };
+
   useEffect(() => {
     console.log(`Restart state: ${restart}`);
     console.log(`showMenuDialog: ${showMenuDialog}`);
@@ -155,12 +219,29 @@ function App(): React.JSX.Element {
       {!showMenuDialog && !restart && (
         <div
           ref={iconRef}
-          style={styles.imageDivContainer}
+          style={{
+            ...styles.imageDivContainer,
+            touchAction: 'none', // Critical for smooth touch handling
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            cursor: 'grab'
+          }}
           onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           role="button"
           tabIndex={0}
         >
-          <img src={restartLogo} alt="Bot" style={styles.botImageStyles} />
+          <img
+            src={restartLogo}
+            alt="Bot"
+            style={{
+              ...styles.botImageStyles,
+              pointerEvents: 'none', // Prevent image from interfering with pointer events
+              userSelect: 'none'
+            }}
+          />
         </div>
       )}
       <Dialog open={showMenuDialog} onClose={() => setShowMenuDialog(false)} fullScreen>
@@ -225,7 +306,6 @@ function App(): React.JSX.Element {
             variant="contained"
             onClick={() => {
               setShowMenuDialog(false);
-              // setRestart(true);
               restartApp();
             }}
           >
