@@ -19,8 +19,12 @@ function App(): React.JSX.Element {
   const startPointerRef = useRef({ x: 0, y: 0 });
   const rafIdRef = useRef<number | null>(null);
   const pendingMoveRef = useRef<{ x: number; y: number } | null>(null);
+  const moveCountRef = useRef<number>(0);
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
   const [restart, setRestart] = useState<boolean>(false);
+
+  // Toggle for verbose logging (set to false for production)
+  const DEBUG_LOGGING = true;
 
   const toggleMenu = (e?: Event | React.SyntheticEvent): void => {
     try {
@@ -51,14 +55,16 @@ function App(): React.JSX.Element {
 
   // Pointer handlers (works for mouse, touch, pen)
   const onPointerDown = async (e: React.PointerEvent): Promise<void> => {
-    console.log('🔵 POINTER DOWN', {
-      pointerId: e.pointerId,
-      type: e.pointerType,
-      position: { x: e.clientX, y: e.clientY }
-    });
+    if (DEBUG_LOGGING) {
+      console.log('🔵 POINTER DOWN', {
+        pointerId: e.pointerId,
+        type: e.pointerType,
+        position: { x: e.clientX, y: e.clientY }
+      });
+    }
 
     if (showMenuDialog || restart) {
-      console.log('⚠️ Prevented - menu or restart active');
+      if (DEBUG_LOGGING) console.log('⚠️ Prevented - menu or restart active');
       e.preventDefault();
       return;
     }
@@ -71,12 +77,15 @@ function App(): React.JSX.Element {
     startPointerRef.current = { x: e.clientX, y: e.clientY };
     dragStartPosition.current = { x: e.clientX, y: e.clientY };
     isDraggingRef.current = false;
+    moveCountRef.current = 0;
 
     // Get current window position
     const windowPos = await window.electron.windowMoveResize.getPosition();
     startWindowPosRef.current = windowPos;
 
-    console.log('✅ Pointer captured - window start pos:', windowPos);
+    if (DEBUG_LOGGING) {
+      console.log('✅ Pointer captured - window start pos:', windowPos);
+    }
 
     e.preventDefault();
     e.stopPropagation();
@@ -85,7 +94,7 @@ function App(): React.JSX.Element {
   const onPointerMove = (e: React.PointerEvent): void => {
     // Early exit checks
     if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) {
-      if (pointerIdRef.current !== null) {
+      if (DEBUG_LOGGING && pointerIdRef.current !== null) {
         console.log('⚠️ MOVE IGNORED - wrong pointer ID', {
           expected: pointerIdRef.current,
           got: e.pointerId
@@ -94,7 +103,7 @@ function App(): React.JSX.Element {
       return;
     }
     if (showMenuDialog || restart) {
-      console.log('⚠️ MOVE IGNORED - menu/restart active');
+      if (DEBUG_LOGGING) console.log('⚠️ MOVE IGNORED - menu/restart active');
       return;
     }
 
@@ -103,7 +112,7 @@ function App(): React.JSX.Element {
 
     // Simple threshold check
     if (dx > 3 || dy > 3) {
-      if (!isDraggingRef.current) {
+      if (!isDraggingRef.current && DEBUG_LOGGING) {
         console.log('🟢 DRAG STARTED - threshold exceeded', { dx, dy });
       }
       isDraggingRef.current = true;
@@ -135,11 +144,17 @@ function App(): React.JSX.Element {
     // Schedule move on next animation frame for smooth 60fps updates
     rafIdRef.current = requestAnimationFrame(() => {
       if (pendingMoveRef.current) {
-        console.log('🔄 MOVING', {
-          pointer: { x: e.clientX, y: e.clientY },
-          delta: { x: deltaX, y: deltaY },
-          target: pendingMoveRef.current
-        });
+        moveCountRef.current++;
+
+        // Log only every 10th move to reduce console spam
+        if (DEBUG_LOGGING && moveCountRef.current % 10 === 0) {
+          console.log('🔄 MOVING', {
+            count: moveCountRef.current,
+            pointer: { x: e.clientX, y: e.clientY },
+            delta: { x: deltaX, y: deltaY },
+            target: pendingMoveRef.current
+          });
+        }
 
         window.electron.windowMoveResize.moveWindow(
           pendingMoveRef.current.x,
@@ -155,20 +170,23 @@ function App(): React.JSX.Element {
 
   const onPointerUp = (e: React.PointerEvent): void => {
     if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) {
-      console.log('⚠️ POINTER UP IGNORED - wrong pointer ID');
+      if (DEBUG_LOGGING) console.log('⚠️ POINTER UP IGNORED - wrong pointer ID');
       return;
     }
 
-    console.log('🔴 POINTER UP', {
-      pointerId: e.pointerId,
-      type: e.pointerType,
-      wasDragging: isDraggingRef.current
-    });
+    if (DEBUG_LOGGING) {
+      console.log('🔴 POINTER UP', {
+        pointerId: e.pointerId,
+        type: e.pointerType,
+        wasDragging: isDraggingRef.current,
+        totalMoves: moveCountRef.current
+      });
+    }
 
     const target = e.currentTarget as Element;
     try {
       target.releasePointerCapture(e.pointerId);
-      console.log('✅ Pointer capture released');
+      if (DEBUG_LOGGING) console.log('✅ Pointer capture released');
     } catch (err) {
       console.error('❌ Failed to release pointer capture:', err);
     }
@@ -186,13 +204,14 @@ function App(): React.JSX.Element {
     isDraggingRef.current = false;
     startWindowPosRef.current = null;
     pendingMoveRef.current = null;
+    moveCountRef.current = 0;
 
     // Handle click if not dragging
     if (!wasDragging) {
-      console.log('👆 CLICK detected - opening menu');
+      if (DEBUG_LOGGING) console.log('👆 CLICK detected - opening menu');
       toggleMenu(e as unknown as Event);
     } else {
-      console.log('✅ DRAG completed');
+      if (DEBUG_LOGGING) console.log('✅ DRAG completed');
     }
 
     e.preventDefault();
@@ -200,12 +219,14 @@ function App(): React.JSX.Element {
   };
 
   useEffect(() => {
-    console.log('📐 Window resize triggered', { showMenuDialog, restart });
+    if (DEBUG_LOGGING) {
+      console.log('📐 Window resize triggered', { showMenuDialog, restart });
+    }
     if (showMenuDialog && !restart) {
-      console.log('→ Setting window to MENU size: 692x429');
+      if (DEBUG_LOGGING) console.log('→ Setting window to MENU size: 692x429');
       window.electron.windowMoveResize.setWindowSize(692, 429, 300, 300);
     } else if (!showMenuDialog && !restart) {
-      console.log('→ Setting window to ICON size: 50x50');
+      if (DEBUG_LOGGING) console.log('→ Setting window to ICON size: 50x50');
       window.electron.windowMoveResize.setWindowSize(50, 50);
     }
   }, [showMenuDialog, restart]);
