@@ -19,6 +19,7 @@ function App(): React.JSX.Element {
   const startPointerRef = useRef({ x: 0, y: 0 });
   const currentWindowPosRef = useRef<[number, number] | null>(null);
   const lastMoveTimeRef = useRef<number>(0);
+  const lastValidPointerRef = useRef({ x: 0, y: 0 });
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
   const [restart, setRestart] = useState<boolean>(false);
 
@@ -102,6 +103,18 @@ function App(): React.JSX.Element {
 
     if (!isDraggingRef.current) return;
 
+    // Ignore jittery touch inputs - if position jumped too far from last valid position
+    const jumpThreshold = 50; // pixels
+    const jumpX = Math.abs(e.clientX - lastValidPointerRef.current.x);
+    const jumpY = Math.abs(e.clientY - lastValidPointerRef.current.y);
+
+    if (lastValidPointerRef.current.x !== 0 && (jumpX > jumpThreshold || jumpY > jumpThreshold)) {
+      console.log('Ignoring jittery input', { jumpX, jumpY });
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     // Throttle moves to prevent flooding
     const now = Date.now();
     if (now - lastMoveTimeRef.current < 16) {
@@ -109,6 +122,9 @@ function App(): React.JSX.Element {
       return;
     }
     lastMoveTimeRef.current = now;
+
+    // Update last valid position
+    lastValidPointerRef.current = { x: e.clientX, y: e.clientY };
 
     const deltaX = e.clientX - startPointerRef.current.x;
     const deltaY = e.clientY - startPointerRef.current.y;
