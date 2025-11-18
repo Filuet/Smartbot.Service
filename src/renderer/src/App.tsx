@@ -17,6 +17,8 @@ function App(): React.JSX.Element {
   const pointerIdRef = useRef<number | null>(null);
   const startWindowPosRef = useRef<[number, number] | null>(null);
   const startPointerRef = useRef({ x: 0, y: 0 });
+  const rafIdRef = useRef<number | null>(null);
+  const pendingMoveRef = useRef<{ x: number; y: number } | null>(null);
   const [showMenuDialog, setShowMenuDialog] = useState<boolean>(false);
   const [restart, setRestart] = useState<boolean>(false);
 
@@ -122,14 +124,30 @@ function App(): React.JSX.Element {
     const targetX = startWindowPosRef.current[0] + deltaX;
     const targetY = startWindowPosRef.current[1] + deltaY;
 
-    console.log('🔄 MOVING', {
-      pointer: { x: e.clientX, y: e.clientY },
-      delta: { x: deltaX, y: deltaY },
-      target: { x: targetX, y: targetY }
-    });
+    // Store pending move position
+    pendingMoveRef.current = { x: targetX, y: targetY };
 
-    // Move window immediately - no throttling, no validation
-    window.electron.windowMoveResize.moveWindow(targetX, targetY);
+    // Cancel any pending animation frame
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+
+    // Schedule move on next animation frame for smooth 60fps updates
+    rafIdRef.current = requestAnimationFrame(() => {
+      if (pendingMoveRef.current) {
+        console.log('🔄 MOVING', {
+          pointer: { x: e.clientX, y: e.clientY },
+          delta: { x: deltaX, y: deltaY },
+          target: pendingMoveRef.current
+        });
+
+        window.electron.windowMoveResize.moveWindow(
+          pendingMoveRef.current.x,
+          pendingMoveRef.current.y
+        );
+        rafIdRef.current = null;
+      }
+    });
 
     e.preventDefault();
     e.stopPropagation();
@@ -157,10 +175,17 @@ function App(): React.JSX.Element {
 
     const wasDragging = isDraggingRef.current;
 
+    // Cancel any pending animation frame
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+
     // Clean up
     pointerIdRef.current = null;
     isDraggingRef.current = false;
     startWindowPosRef.current = null;
+    pendingMoveRef.current = null;
 
     // Handle click if not dragging
     if (!wasDragging) {
