@@ -8,12 +8,6 @@ const windowMoveResizeIpc = (mainWindow: BrowserWindow): void => {
       return;
     }
 
-    try {
-      console.log('[IPC] MOVE_WINDOW received:', { x, y });
-    } catch (err) {
-      void err;
-    }
-
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     const boundedX = Math.max(0, Math.min(x, width - mainWindow.getSize()[0]));
     const boundedY = Math.max(0, Math.min(y, height - mainWindow.getSize()[1]));
